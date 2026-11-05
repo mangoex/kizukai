@@ -9,6 +9,7 @@ interface MobileRoleSheetProps {
   onSelectUser: (user: User) => void;
   onOpenLoginModal: () => void;
   onNavigateToDatabase: () => void;
+  onNavigateToAdmin?: () => void;
 }
 
 export const MobileRoleSheet: React.FC<MobileRoleSheetProps> = ({
@@ -17,7 +18,8 @@ export const MobileRoleSheet: React.FC<MobileRoleSheetProps> = ({
   onClose,
   onSelectUser,
   onOpenLoginModal,
-  onNavigateToDatabase
+  onNavigateToDatabase,
+  onNavigateToAdmin
 }) => {
   if (!isOpen) return null;
 
@@ -198,8 +200,8 @@ export const MobileRoleSheet: React.FC<MobileRoleSheetProps> = ({
           {/* Accesos de Seguridad y Base de Datos */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '0.5rem',
+            gridTemplateColumns: onNavigateToAdmin ? '1fr 1fr 1fr' : '1fr 1fr',
+            gap: '0.4rem',
             paddingTop: '0.75rem',
             borderTop: '1px solid var(--kiz-border-subtle)'
           }}>
@@ -210,10 +212,24 @@ export const MobileRoleSheet: React.FC<MobileRoleSheetProps> = ({
                 onClose();
               }}
               className="kiz-btn kiz-btn-secondary kiz-btn-sm"
-              style={{ fontSize: '0.78rem', minHeight: 44, justifyContent: 'center' }}
+              style={{ fontSize: '0.72rem', minHeight: 44, justifyContent: 'center', padding: '0.2rem' }}
             >
-              🛡️ BD (22 Tablas)
+              🛡️ Tablas DB
             </button>
+
+            {onNavigateToAdmin && (
+              <button
+                type="button"
+                onClick={() => {
+                  onNavigateToAdmin();
+                  onClose();
+                }}
+                className="kiz-btn kiz-btn-secondary kiz-btn-sm"
+                style={{ fontSize: '0.72rem', minHeight: 44, justifyContent: 'center', padding: '0.2rem' }}
+              >
+                👥 Usuarios
+              </button>
+            )}
 
             <button
               type="button"
@@ -222,9 +238,9 @@ export const MobileRoleSheet: React.FC<MobileRoleSheetProps> = ({
                 onOpenLoginModal();
               }}
               className="kiz-btn kiz-btn-primary kiz-btn-sm"
-              style={{ fontSize: '0.78rem', minHeight: 44, justifyContent: 'center' }}
+              style={{ fontSize: '0.72rem', minHeight: 44, justifyContent: 'center', padding: '0.2rem' }}
             >
-              🔑 Login / MFA
+              🔑 Login
             </button>
           </div>
         </div>

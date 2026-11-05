@@ -4,8 +4,8 @@ import { DEMO_PROFILES } from '../data/seedData.ts';
 
 interface NavbarProps {
   currentUser: User | null;
-  activeView: 'queues' | 'catalog' | 'reports' | 'database';
-  onNavigate: (view: 'queues' | 'catalog' | 'reports' | 'database') => void;
+  activeView: 'queues' | 'catalog' | 'reports' | 'database' | 'admin';
+  onNavigate: (view: 'queues' | 'catalog' | 'reports' | 'database' | 'admin') => void;
   onOpenNewModal: () => void;
   onOpenLoginModal: () => void;
   onSwitchUser: (user: User) => void;
@@ -234,6 +234,21 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               🛡️ BD (22 Tablas) & Seguridad
             </button>
+
+            {(currentUser.role === 'TECH_ADMIN' || currentUser.role === 'CONSULTANT' || currentUser.role === 'COORDINATOR') && (
+              <button
+                onClick={() => onNavigate('admin')}
+                className="kiz-btn kiz-btn-sm"
+                style={{
+                  backgroundColor: activeView === 'admin' ? 'rgba(255,255,255,0.18)' : 'transparent',
+                  color: '#ffffff',
+                  border: activeView === 'admin' ? '1px solid rgba(255,255,255,0.4)' : '1px solid transparent'
+                }}
+                aria-current={activeView === 'admin' ? 'page' : undefined}
+              >
+                👥 Usuarios & Áreas
+              </button>
+            )}
           </nav>
         )}
 

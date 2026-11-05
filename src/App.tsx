@@ -11,6 +11,7 @@ import { WorkspaceModal } from './components/WorkspaceModal.tsx';
 import { NewInitiativeModal } from './components/NewInitiativeModal.tsx';
 import { ReportsModule } from './components/ReportsModule.tsx';
 import { DatabaseSimulator } from './components/DatabaseSimulator.tsx';
+import { AdminManagementModule } from './components/AdminManagementModule.tsx';
 import { useViewport } from './hooks/useViewport.ts';
 import { MobileBottomNav } from './components/MobileBottomNav.tsx';
 import { MobileRoleSheet } from './components/MobileRoleSheet.tsx';
@@ -40,7 +41,7 @@ export const App: React.FC = () => {
   });
 
   // Vista Activa
-  const [activeView, setActiveView] = useState<'queues' | 'catalog' | 'reports' | 'database'>('queues');
+  const [activeView, setActiveView] = useState<'queues' | 'catalog' | 'reports' | 'database' | 'admin'>('queues');
 
   // Estado de Iniciativas y Modales
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
@@ -336,6 +337,12 @@ export const App: React.FC = () => {
                 currentUser={currentUser}
               />
             )}
+
+            {activeView === 'admin' && (
+              <AdminManagementModule
+                currentUser={currentUser}
+              />
+            )}
           </>
         ) : (
           <div className="kiz-card" style={{ textAlign: 'center', padding: '4rem 1.5rem', margin: '2rem auto', maxWidth: 600 }}>
@@ -453,6 +460,7 @@ export const App: React.FC = () => {
         }}
         onOpenLoginModal={() => setIsLoginModalOpen(true)}
         onNavigateToDatabase={() => setActiveView('database')}
+        onNavigateToAdmin={() => setActiveView('admin')}
       />
     </div>
   );

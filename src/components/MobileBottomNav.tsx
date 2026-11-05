@@ -3,8 +3,8 @@ import { User } from '../types/index.ts';
 
 interface MobileBottomNavProps {
   currentUser: User | null;
-  activeView: 'queues' | 'catalog' | 'reports' | 'database';
-  onNavigate: (view: 'queues' | 'catalog' | 'reports' | 'database') => void;
+  activeView: 'queues' | 'catalog' | 'reports' | 'database' | 'admin';
+  onNavigate: (view: 'queues' | 'catalog' | 'reports' | 'database' | 'admin') => void;
   pendingCount?: number;
   onOpenNewInitiative: () => void;
   onOpenRoleSheet: () => void;

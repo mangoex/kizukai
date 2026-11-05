@@ -17,7 +17,10 @@ import {
 const STORAGE_KEYS = {
   INITIATIVES: 'kizukai_hub_initiatives_v1',
   AUDIT_LOGS: 'kizukai_hub_audit_logs_v1',
-  CURRENT_USER: 'kizukai_hub_active_user_v1'
+  CURRENT_USER: 'kizukai_hub_active_user_v1',
+  ORGANIZATIONS: 'kizukai_hub_organizations_v1',
+  DEPARTMENTS: 'kizukai_hub_departments_v1',
+  USERS: 'kizukai_hub_users_v1'
 };
 
 export class StorageService {
@@ -606,5 +609,306 @@ export class StorageService {
 
   public static getDatabaseEntitiesSummary() {
     return DATABASE_ENTITIES;
+  }
+
+  // =========================================================================
+  // MÓDULO DE PERSISTENCIA Y APROVISIONAMIENTO JERÁRQUICO (HU-1.1 A HU-4.2)
+  // =========================================================================
+
+  public static getOrganizations(): any[] {
+    const raw = localStorage.getItem(STORAGE_KEYS.ORGANIZATIONS);
+    if (!raw) {
+      const initialOrgs = [
+        {
+          id: 'ORG-A',
+          businessName: 'Manufactura Eléctrica del Norte S.A. de C.V.',
+          commercialName: 'Manufactura Norte',
+          taxId: 'MEN920315AB1',
+          industrySector: 'Automotriz y Eléctrico',
+          isActive: true,
+          createdAt: '2026-01-10T08:00:00Z'
+        },
+        {
+          id: 'ORG-B',
+          businessName: 'Alimentos y Bebidas del Bajío S.A.P.I. de C.V.',
+          commercialName: 'Alimentos Bajío',
+          taxId: 'ABB180422CD3',
+          industrySector: 'Alimentos y Bebidas',
+          isActive: true,
+          createdAt: '2026-02-01T09:30:00Z'
+        }
+      ];
+      localStorage.setItem(STORAGE_KEYS.ORGANIZATIONS, JSON.stringify(initialOrgs));
+      return initialOrgs;
+    }
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return [];
+    }
+  }
+
+  public static createOrganization(
+    actor: User,
+    data: { businessName: string; commercialName: string; taxId?: string; industrySector: string }
+  ): { success: boolean; organization?: any; error?: string } {
+    if (actor.role !== 'TECH_ADMIN') {
+      return {
+        success: false,
+        error: '403 Forbidden: Solo el Administrador Técnico (TECH_ADMIN) puede crear nuevas empresas clientes.'
+      };
+    }
+
+    if (!data.businessName || !data.commercialName) {
+      return { success: false, error: 'La razón social y el nombre comercial son obligatorios.' };
+    }
+
+    const orgs = this.getOrganizations();
+    const newId = `ORG-${String.fromCharCode(65 + (orgs.length % 26))}${orgs.length > 25 ? orgs.length : ''}`;
+    const newOrg = {
+      id: newId,
+      businessName: data.businessName.trim(),
+      commercialName: data.commercialName.trim(),
+      taxId: data.taxId?.trim() || 'XAXX010101000',
+      industrySector: data.industrySector || 'Industrial',
+      isActive: true,
+      createdAt: new Date().toISOString()
+    };
+
+    orgs.push(newOrg);
+    localStorage.setItem(STORAGE_KEYS.ORGANIZATIONS, JSON.stringify(orgs));
+
+    this.logAudit({
+      entity: 'organizations',
+      entityId: newId,
+      action: 'ORGANIZATION_CREATED',
+      performedBy: actor.email,
+      tenantId: newId,
+      payloadSnapshot: newOrg
+    });
+
+    return { success: true, organization: newOrg };
+  }
+
+  public static getDepartments(): any[] {
+    const raw = localStorage.getItem(STORAGE_KEYS.DEPARTMENTS);
+    if (!raw) {
+      const initialDepts = [
+        { id: 'dept-01', organizationId: 'ORG-A', name: 'Ensamble y Troquelado', branchOffice: 'Planta Norte' },
+        { id: 'dept-02', organizationId: 'ORG-A', name: 'Troquelado y Prensas', branchOffice: 'Planta Norte' },
+        { id: 'dept-03', organizationId: 'ORG-A', name: 'Mantenimiento y Servicios', branchOffice: 'Planta Norte' },
+        { id: 'dept-04', organizationId: 'ORG-A', name: 'Devanado y Bobinado', branchOffice: 'Planta Norte' },
+        { id: 'dept-05', organizationId: 'ORG-A', name: 'Empaque y Almacén', branchOffice: 'Planta Norte' },
+        { id: 'dept-06', organizationId: 'ORG-A', name: 'Pintura y Acabados', branchOffice: 'Planta Norte' },
+        { id: 'dept-07', organizationId: 'ORG-B', name: 'Línea de Envasado Aséptico', branchOffice: 'Planta Bajío' },
+        { id: 'dept-08', organizationId: 'ORG-B', name: 'Silos y Granos', branchOffice: 'Planta Bajío' },
+        { id: 'dept-09', organizationId: 'ORG-B', name: 'Mantenimiento General', branchOffice: 'Planta Bajío' }
+      ];
+      localStorage.setItem(STORAGE_KEYS.DEPARTMENTS, JSON.stringify(initialDepts));
+      return initialDepts;
+    }
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return [];
+    }
+  }
+
+  public static createDepartment(
+    actor: User,
+    data: { organizationId: string; name: string; branchOffice?: string }
+  ): { success: boolean; department?: any; error?: string } {
+    if (actor.role === 'PARTICIPANT' || actor.role === 'MENTOR') {
+      return { success: false, error: '403 Forbidden: No tienes privilegios para crear departamentos.' };
+    }
+
+    if (actor.role === 'COORDINATOR' && actor.tenantId !== data.organizationId) {
+      return { success: false, error: '403 Forbidden: Un Coordinador no puede registrar departamentos en otra empresa.' };
+    }
+
+    if (!data.name.trim()) {
+      return { success: false, error: 'El nombre del departamento es obligatorio.' };
+    }
+
+    const depts = this.getDepartments();
+    const newDept = {
+      id: `dept-${Date.now().toString().slice(-5)}`,
+      organizationId: data.organizationId,
+      name: data.name.trim(),
+      branchOffice: data.branchOffice?.trim() || 'Planta Principal'
+    };
+
+    depts.push(newDept);
+    localStorage.setItem(STORAGE_KEYS.DEPARTMENTS, JSON.stringify(depts));
+
+    this.logAudit({
+      entity: 'departments',
+      entityId: newDept.id,
+      action: 'DEPARTMENT_CREATED',
+      performedBy: actor.email,
+      tenantId: data.organizationId,
+      payloadSnapshot: newDept
+    });
+
+    return { success: true, department: newDept };
+  }
+
+  public static getUsers(): User[] {
+    const raw = localStorage.getItem(STORAGE_KEYS.USERS);
+    if (!raw) {
+      const initialUsers: User[] = [
+        {
+          id: 'usr-001-juan',
+          name: 'Juan Pérez',
+          email: 'juan.perez@manufacturanorte.mx',
+          role: 'PARTICIPANT',
+          tenantId: 'ORG-A',
+          tenantName: 'Manufactura Eléctrica del Norte',
+          department: 'Ensamble y Troquelado',
+          requiresMfa: false,
+          avatarInitials: 'JP'
+        },
+        {
+          id: 'usr-002-carlos',
+          name: 'Carlos Mendoza',
+          email: 'carlos.mendoza@manufacturanorte.mx',
+          role: 'MENTOR',
+          tenantId: 'ORG-A',
+          tenantName: 'Manufactura Eléctrica del Norte',
+          department: 'Ensamble y Troquelado',
+          requiresMfa: false,
+          avatarInitials: 'CM'
+        },
+        {
+          id: 'usr-003-ana',
+          name: 'Ana Sofía Garza',
+          email: 'ana.garza@manufacturanorte.mx',
+          role: 'COORDINATOR',
+          tenantId: 'ORG-A',
+          tenantName: 'Manufactura Eléctrica del Norte',
+          department: 'Coordinación de Mejora Continua',
+          requiresMfa: true,
+          avatarInitials: 'AG'
+        },
+        {
+          id: 'usr-004-kasuga',
+          name: 'Carlos Kasuga',
+          email: 'carlos.kasuga@kizukai.com',
+          role: 'CONSULTANT',
+          tenantId: 'ORG-GLOBAL',
+          tenantName: 'Kizukai Consulting Global',
+          department: 'Metodología Kaizen',
+          requiresMfa: true,
+          avatarInitials: 'CK'
+        },
+        {
+          id: 'usr-005-david',
+          name: 'David Villarreal',
+          email: 'david.tech@kizukai.com',
+          role: 'TECH_ADMIN',
+          tenantId: 'ORG-GLOBAL',
+          tenantName: 'Kizukai Consulting Global',
+          department: 'TI & Ciberseguridad',
+          requiresMfa: true,
+          avatarInitials: 'DV'
+        },
+        {
+          id: 'usr-006-laura',
+          name: 'Laura Gómez',
+          email: 'laura.gomez@alimentosbajio.mx',
+          role: 'COORDINATOR',
+          tenantId: 'ORG-B',
+          tenantName: 'Alimentos y Bebidas del Bajío',
+          department: 'Calidad e Inocuidad',
+          requiresMfa: true,
+          avatarInitials: 'LG'
+        }
+      ];
+      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(initialUsers));
+      return initialUsers;
+    }
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return [];
+    }
+  }
+
+  public static createUser(
+    actor: User,
+    data: { name: string; email: string; role: any; organizationId: string; department?: string }
+  ): { success: boolean; user?: User; error?: string } {
+    // 1. Validaciones RBAC con AdminEngine
+    const role = actor.role;
+    const targetRole = data.role;
+    const actorOrg = actor.tenantId;
+    const targetOrg = data.organizationId;
+
+    if (role === 'PARTICIPANT' || role === 'MENTOR') {
+      return { success: false, error: '403 Forbidden: No tienes privilegios para dar de alta usuarios.' };
+    }
+
+    if (role === 'TECH_ADMIN' && targetRole !== 'CONSULTANT' && targetRole !== 'TECH_ADMIN') {
+      return { success: false, error: '403 Forbidden: El Administrador Técnico solo da de alta Consultores Globales.' };
+    }
+
+    if (role === 'CONSULTANT' && targetRole !== 'COORDINATOR') {
+      return { success: false, error: '403 Forbidden: El Consultor Global solo puede dar de alta Coordinadores de Empresa.' };
+    }
+
+    if (role === 'COORDINATOR') {
+      if (actorOrg !== targetOrg) {
+        return { success: false, error: '403 Forbidden (MultiTenantViolation): Un Coordinador no puede registrar usuarios en otra empresa.' };
+      }
+      if (targetRole !== 'PARTICIPANT' && targetRole !== 'MENTOR') {
+        return { success: false, error: '403 Forbidden: Un Coordinador solo puede registrar Participantes y Mentores.' };
+      }
+    }
+
+    if (!data.name || !data.email) {
+      return { success: false, error: 'Nombre y correo electrónico son obligatorios.' };
+    }
+
+    const users = this.getUsers();
+    if (users.some((u) => u.email.toLowerCase() === data.email.toLowerCase())) {
+      return { success: false, error: 'Ya existe un usuario registrado con este correo electrónico.' };
+    }
+
+    const orgs = this.getOrganizations();
+    const targetOrgRecord = orgs.find((o) => o.id === targetOrg);
+    const orgName = targetOrg === 'ORG-GLOBAL' ? 'Kizukai Consulting Global' : (targetOrgRecord?.commercialName || targetOrg);
+
+    const initials = data.name.split(' ').map((p) => p[0]).join('').slice(0, 2).toUpperCase() || 'U';
+
+    const newUser: User = {
+      id: `usr-${Date.now().toString().slice(-6)}`,
+      name: data.name.trim(),
+      email: data.email.trim().toLowerCase(),
+      role: targetRole,
+      tenantId: targetOrg,
+      tenantName: orgName,
+      department: data.department?.trim() || 'General',
+      requiresMfa: targetRole === 'TECH_ADMIN' || targetRole === 'CONSULTANT' || targetRole === 'COORDINATOR',
+      avatarInitials: initials
+    };
+
+    users.push(newUser);
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+
+    this.logAudit({
+      entity: 'users',
+      entityId: newUser.id,
+      action: 'USER_CREATED',
+      performedBy: actor.email,
+      tenantId: targetOrg,
+      payloadSnapshot: {
+        userId: newUser.id,
+        name: newUser.name,
+        role: newUser.role,
+        tenantId: newUser.tenantId
+      }
+    });
+
+    return { success: true, user: newUser };
   }
 }

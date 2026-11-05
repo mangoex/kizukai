@@ -1,4 +1,4 @@
-export type TenantId = 'ORG-A' | 'ORG-B';
+export type TenantId = 'ORG-A' | 'ORG-B' | 'ORG-GLOBAL' | string;
 
 export type BusinessState =
   | 'BORRADOR'
@@ -111,6 +111,23 @@ export interface StandardizationSop {
   title: string;
   publishedAt: string;
   documentUrl: string;
+}
+
+export interface OrganizationRecord {
+  id: string;
+  businessName: string;
+  commercialName: string;
+  taxId?: string;
+  industrySector: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface DepartmentRecord {
+  id: string;
+  organizationId: string;
+  name: string;
+  branchOffice?: string;
 }
 
 export interface Initiative {

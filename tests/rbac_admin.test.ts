@@ -1,0 +1,84 @@
+import { describe, it, expect } from 'vitest';
+import { AdminEngine } from '../src/domain/adminEngine';
+
+describe('AdminEngine - Reglas de Gobierno y Aprovisionamiento RBAC (HU-1.1 a HU-4.2)', () => {
+  describe('HU-1.1: Aprovisionamiento de Organizaciones', () => {
+    it('TC-ADMIN-001: TECH_ADMIN puede crear organizaciones', () => {
+      expect(AdminEngine.canUserCreateOrganization('TECH_ADMIN')).toBe(true);
+    });
+
+    it('TC-ADMIN-002: CONSULTANT, COORDINATOR y PARTICIPANT no pueden crear organizaciones', () => {
+      expect(AdminEngine.canUserCreateOrganization('CONSULTANT')).toBe(false);
+      expect(AdminEngine.canUserCreateOrganization('COORDINATOR')).toBe(false);
+      expect(AdminEngine.canUserCreateOrganization('MENTOR')).toBe(false);
+      expect(AdminEngine.canUserCreateOrganization('PARTICIPANT')).toBe(false);
+    });
+  });
+
+  describe('HU-2.1: Aprovisionamiento de Consultores por TECH_ADMIN', () => {
+    it('TC-ADMIN-003: TECH_ADMIN puede dar de alta un CONSULTANT', () => {
+      const decision = AdminEngine.canUserCreateUser('TECH_ADMIN', 'CONSULTANT', 'ORG-GLOBAL', 'ORG-GLOBAL');
+      expect(decision.allowed).toBe(true);
+    });
+
+    it('TC-ADMIN-004: TECH_ADMIN no puede dar de alta directamente PARTICIPANT de negocio', () => {
+      const decision = AdminEngine.canUserCreateUser('TECH_ADMIN', 'PARTICIPANT', 'ORG-GLOBAL', 'ORG-A');
+      expect(decision.allowed).toBe(false);
+      expect(decision.reason).toContain('solo da de alta Consultores');
+    });
+  });
+
+  describe('HU-2.2: Aprovisionamiento de Coordinadores por CONSULTANT', () => {
+    it('TC-ADMIN-005: CONSULTANT puede dar de alta COORDINATOR en cualquier empresa cliente', () => {
+      const decisionOrgA = AdminEngine.canUserCreateUser('CONSULTANT', 'COORDINATOR', 'ORG-GLOBAL', 'ORG-A');
+      expect(decisionOrgA.allowed).toBe(true);
+
+      const decisionOrgB = AdminEngine.canUserCreateUser('CONSULTANT', 'COORDINATOR', 'ORG-GLOBAL', 'ORG-B');
+      expect(decisionOrgB.allowed).toBe(true);
+    });
+
+    it('TC-ADMIN-006: CONSULTANT no puede dar de alta un PARTICIPANT directamente', () => {
+      const decision = AdminEngine.canUserCreateUser('CONSULTANT', 'PARTICIPANT', 'ORG-GLOBAL', 'ORG-A');
+      expect(decision.allowed).toBe(false);
+      expect(decision.reason).toContain('solo puede dar de alta Coordinadores');
+    });
+  });
+
+  describe('HU-2.3: Aprovisionamiento de Participantes y Mentores por COORDINATOR', () => {
+    it('TC-ADMIN-007: COORDINATOR de ORG-A puede dar de alta PARTICIPANT y MENTOR en ORG-A', () => {
+      const decisionPart = AdminEngine.canUserCreateUser('COORDINATOR', 'PARTICIPANT', 'ORG-A', 'ORG-A');
+      expect(decisionPart.allowed).toBe(true);
+
+      const decisionMentor = AdminEngine.canUserCreateUser('COORDINATOR', 'MENTOR', 'ORG-A', 'ORG-A');
+      expect(decisionMentor.allowed).toBe(true);
+    });
+
+    it('TC-ADMIN-008: COORDINATOR de ORG-A es bloqueado (403) si intenta crear usuario en ORG-B (Cross-Tenant)', () => {
+      const decision = AdminEngine.canUserCreateUser('COORDINATOR', 'PARTICIPANT', 'ORG-A', 'ORG-B');
+      expect(decision.allowed).toBe(false);
+      expect(decision.reason).toContain('Violación Multi-Tenant');
+    });
+
+    it('TC-ADMIN-009: COORDINATOR no puede escalar privilegios creando un CONSULTANT o TECH_ADMIN', () => {
+      const decision = AdminEngine.canUserCreateUser('COORDINATOR', 'TECH_ADMIN', 'ORG-A', 'ORG-A');
+      expect(decision.allowed).toBe(false);
+      expect(decision.reason).toContain('solo puede dar de alta Participantes y Mentores');
+    });
+  });
+
+  describe('HU-3.1 & HU-3.2: Catálogos de Departamentos y Categorías QCDSM', () => {
+    it('TC-ADMIN-010: El catálogo estratégico contiene las 5 directrices QCDSM', () => {
+      const guidelines = AdminEngine.STRATEGIC_GUIDELINES;
+      expect(guidelines).toHaveLength(5);
+      const codes = guidelines.map((g) => g.code);
+      expect(codes).toEqual(['CALIDAD', 'COSTO', 'ENTREGA', 'SEGURIDAD', 'MORAL']);
+    });
+
+    it('TC-ADMIN-011: COORDINATOR puede gestionar departamentos de su propia empresa pero no ajenas', () => {
+      expect(AdminEngine.canUserManageDepartments('COORDINATOR', 'ORG-A', 'ORG-A')).toBe(true);
+      expect(AdminEngine.canUserManageDepartments('COORDINATOR', 'ORG-A', 'ORG-B')).toBe(false);
+      expect(AdminEngine.canUserManageDepartments('CONSULTANT', 'ORG-GLOBAL', 'ORG-A')).toBe(true);
+      expect(AdminEngine.canUserManageDepartments('PARTICIPANT', 'ORG-A', 'ORG-A')).toBe(false);
+    });
+  });
+});
