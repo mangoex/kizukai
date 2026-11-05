@@ -816,8 +816,9 @@ export class StorageService {
 
   public static getUsers(): User[] {
     const raw = localStorage.getItem(STORAGE_KEYS.USERS);
+    let users: User[] = [];
     if (!raw) {
-      const initialUsers: User[] = [
+      users = [
         {
           id: 'usr-000-mangoex',
           name: 'Super Admin (Mangoex)',
@@ -896,14 +897,37 @@ export class StorageService {
           avatarInitials: 'LG'
         }
       ];
-      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(initialUsers));
-      return initialUsers;
+    } else {
+      try {
+        users = JSON.parse(raw);
+      } catch {
+        users = [];
+      }
     }
-    try {
-      return JSON.parse(raw);
-    } catch {
-      return [];
+
+    // Asegurar que la cuenta Super Admin (mangoex@gmail.com) siempre exista en users
+    const hasMangoex = users.some(
+      (u) => u.email.toLowerCase() === 'mangoex@gmail.com' || u.id === 'usr-000-mangoex'
+    );
+
+    if (!hasMangoex) {
+      users.unshift({
+        id: 'usr-000-mangoex',
+        name: 'Super Admin (Mangoex)',
+        email: 'mangoex@gmail.com',
+        role: 'TECH_ADMIN',
+        tenantId: 'ORG-GLOBAL',
+        tenantName: 'Kizukai Platform Infrastructure (Root)',
+        department: 'Super Administrador / Dirección',
+        requiresMfa: false,
+        avatarInitials: 'SA'
+      });
+      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+    } else if (!raw) {
+      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
     }
+
+    return users;
   }
 
   public static createUser(
@@ -986,15 +1010,50 @@ export class StorageService {
 
   public static updateUserProfile(
     userId: string,
-    updates: { name?: string; email?: string; department?: string; phoneNumber?: string; jobTitle?: string; avatarUrl?: string }
+    updates: { name?: string; email?: string; department?: string; phoneNumber?: string; jobTitle?: string; avatarUrl?: string },
+    fallbackUser?: User
   ): { success: boolean; user?: User; error?: string } {
     const users = this.getUsers();
-    const idx = users.findIndex((u) => u.id === userId);
-    if (idx === -1) {
-      return { success: false, error: 'Usuario no encontrado.' };
+    
+    // 1. Buscar por ID de usuario
+    let idx = users.findIndex((u) => u.id === userId);
+
+    // 2. Fallback: buscar por email si el ID difiere (p. ej. cuentas super admin migradas)
+    if (idx === -1 && updates.email) {
+      idx = users.findIndex((u) => u.email.toLowerCase() === updates.email!.trim().toLowerCase());
     }
 
-    const current = users[idx];
+    // 3. Fallback: buscar por email del fallbackUser
+    if (idx === -1 && fallbackUser?.email) {
+      idx = users.findIndex((u) => u.email.toLowerCase() === fallbackUser.email.toLowerCase());
+    }
+
+    let current: User;
+
+    if (idx === -1) {
+      // Si el usuario no estaba en la tabla, lo añadimos (Upsert seguro)
+      const baseUser = fallbackUser || {
+        id: userId || 'usr-000-mangoex',
+        name: updates.name || 'Super Admin (Mangoex)',
+        email: updates.email || 'mangoex@gmail.com',
+        role: 'TECH_ADMIN' as const,
+        tenantId: 'ORG-A',
+        tenantName: 'Kizukai Platform Infrastructure (Root)',
+        department: updates.department || 'Super Administrador / Dirección',
+        requiresMfa: false,
+        avatarInitials: 'SA'
+      };
+
+      current = {
+        ...baseUser,
+        id: userId || baseUser.id
+      };
+      users.unshift(current);
+      idx = 0;
+    } else {
+      current = users[idx];
+    }
+
     const newName = updates.name !== undefined ? updates.name.trim() : current.name;
     const initials = newName.split(' ').map((p) => p[0]).join('').slice(0, 2).toUpperCase() || current.avatarInitials;
 
@@ -1011,6 +1070,9 @@ export class StorageService {
 
     users[idx] = updatedUser;
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+
+    // Mantener sincronizado inmediatamente el active user en sesión
+    localStorage.setItem('kizukai_active_user', JSON.stringify(updatedUser));
 
     this.logAudit({
       entity: 'users',

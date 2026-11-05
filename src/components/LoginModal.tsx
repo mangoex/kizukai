@@ -32,7 +32,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     // Verificación especial para cuenta de Super Admin
     if (cleanEmail === 'mangoex@gmail.com') {
       if (password === '531698Pa' || password === 'kizukai2026') {
-        const superAdminUser = DEMO_USERS.super_admin;
+        const users = StorageService.getUsers();
+        const savedSuperAdmin = users.find(
+          (u) => u.email.toLowerCase() === 'mangoex@gmail.com' || u.id === 'usr-000-mangoex'
+        );
+        const superAdminUser = savedSuperAdmin || DEMO_USERS.super_admin;
         StorageService.logAudit({
           entity: 'users',
           entityId: superAdminUser.id,

@@ -56,14 +56,18 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     e.preventDefault();
     setStatusMsg(null);
 
-    const res = StorageService.updateUserProfile(currentUser.id, {
-      name,
-      email,
-      department,
-      phoneNumber,
-      jobTitle,
-      avatarUrl: avatarPreview
-    });
+    const res = StorageService.updateUserProfile(
+      currentUser.id,
+      {
+        name,
+        email,
+        department,
+        phoneNumber,
+        jobTitle,
+        avatarUrl: avatarPreview
+      },
+      currentUser
+    );
 
     if (res.success && res.user) {
       setStatusMsg({ type: 'success', text: '✓ Perfil actualizado exitosamente.' });

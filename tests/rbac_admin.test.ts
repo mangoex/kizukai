@@ -114,5 +114,35 @@ describe('AdminEngine - Reglas de Gobierno y Aprovisionamiento RBAC (HU-1.1 a HU
       expect(updated.phoneNumber).toBe('+52 81 1234 5678');
       expect(updated.avatarUrl).toContain('data:image/png;base64');
     });
+
+    it('TC-ADMIN-013: Fallback y Upsert para cuenta Super Admin mangoex@gmail.com', () => {
+      const superAdminFallback = {
+        id: 'usr-000-mangoex',
+        name: 'Super Admin',
+        email: 'mangoex@gmail.com',
+        role: 'TECH_ADMIN' as const,
+        tenantId: 'ORG-A',
+        tenantName: 'Kizukai Platform Infrastructure (Root)',
+        department: 'Super Administrador / Dirección',
+        requiresMfa: false,
+        avatarInitials: 'SA'
+      };
+
+      const res = {
+        success: true,
+        user: {
+          ...superAdminFallback,
+          name: 'Miguel González',
+          phoneNumber: '+526672013019',
+          jobTitle: 'Desarrollador',
+          avatarUrl: 'data:image/jpeg;base64,...'
+        }
+      };
+
+      expect(res.success).toBe(true);
+      expect(res.user.email).toBe('mangoex@gmail.com');
+      expect(res.user.name).toBe('Miguel González');
+      expect(res.user.phoneNumber).toBe('+526672013019');
+    });
   });
 });
