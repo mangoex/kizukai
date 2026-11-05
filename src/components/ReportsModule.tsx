@@ -142,9 +142,9 @@ export const ReportsModule: React.FC<ReportsModuleProps> = ({
       {/* Selector de los 3 Reportes Prioritarios (PRD) */}
       <div style={{
         display: 'flex',
+        flexWrap: 'wrap',
         gap: '0.4rem',
         marginBottom: '1rem',
-        overflowX: 'auto',
         paddingBottom: '0.25rem'
       }}>
         <button

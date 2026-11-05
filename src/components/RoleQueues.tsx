@@ -318,6 +318,8 @@ export const RoleQueues: React.FC<RoleQueuesProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-around',
+              flexWrap: 'wrap',
+              gap: '0.35rem',
               fontSize: '0.75rem',
               paddingTop: '0.4rem',
               borderTop: '1px solid var(--kiz-border-subtle)',
@@ -448,10 +450,10 @@ export const RoleQueues: React.FC<RoleQueuesProps> = ({
             <div style={{
               display: 'flex',
               alignItems: 'center',
+              flexWrap: 'wrap',
               gap: '0.35rem',
               paddingTop: '0.5rem',
               borderTop: '1px solid #f3e8ff',
-              overflowX: 'auto',
             }}>
               <span style={{ fontSize: '0.7rem', color: '#6b21a8', fontWeight: 700, whiteSpace: 'nowrap' }}>
                 Filtrar Planta:
@@ -503,14 +505,7 @@ export const RoleQueues: React.FC<RoleQueuesProps> = ({
         )}
 
         {/* Selector de Subgrupos / Pestañas de Bandeja */}
-        <div style={{
-          display: 'flex',
-          gap: '0.4rem',
-          overflowX: 'auto',
-          paddingTop: '0.75rem',
-          marginTop: '0.75rem',
-          borderTop: '1px solid var(--kiz-border-subtle)',
-        }}>
+        <div className="kiz-subgroup-tabs">
           {subgroups.map((group) => {
             const isSelected = activeGroup.id === group.id;
             return (
@@ -532,7 +527,7 @@ export const RoleQueues: React.FC<RoleQueuesProps> = ({
                 aria-pressed={isSelected}
               >
                 <span>{group.icon}</span>
-                <span>{group.label}</span>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{group.label}</span>
               </button>
             );
           })}

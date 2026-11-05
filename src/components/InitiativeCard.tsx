@@ -407,6 +407,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
+          flexWrap: 'wrap',
           borderTop: '1px solid var(--kiz-border-subtle)',
           paddingTop: '0.65rem',
           fontSize: '0.72rem',

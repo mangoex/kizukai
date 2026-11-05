@@ -179,7 +179,7 @@ export const App: React.FC = () => {
   }, [initiatives, filters]);
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', width: '100%', maxWidth: '100vw', overflowX: 'hidden', display: 'flex', flexDirection: 'column' }}>
       {/* Enlace Accesible de Salto al Contenido */}
       <a
         href="#main-content"
