@@ -15,6 +15,7 @@ import { AdminManagementModule } from './components/AdminManagementModule.tsx';
 import { useViewport } from './hooks/useViewport.ts';
 import { MobileBottomNav } from './components/MobileBottomNav.tsx';
 import { MobileRoleSheet } from './components/MobileRoleSheet.tsx';
+import { ProfileModal } from './components/ProfileModal.tsx';
 
 const DEFAULT_FILTERS: FilterState = {
   searchQuery: '',
@@ -49,6 +50,7 @@ export const App: React.FC = () => {
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isRoleSheetOpen, setIsRoleSheetOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   // Hook reactivo de viewport
   const { isMobile } = useViewport();
@@ -206,6 +208,7 @@ export const App: React.FC = () => {
         onNavigate={(view) => setActiveView(view)}
         onOpenNewModal={() => setIsNewModalOpen(true)}
         onOpenLoginModal={() => setIsLoginModalOpen(true)}
+        onOpenProfileModal={() => setIsProfileModalOpen(true)}
         onOpenRoleSheet={() => setIsRoleSheetOpen(true)}
         onSwitchUser={(user) => {
           setCurrentUser(user);
@@ -459,9 +462,28 @@ export const App: React.FC = () => {
           });
         }}
         onOpenLoginModal={() => setIsLoginModalOpen(true)}
+        onOpenProfileModal={() => setIsProfileModalOpen(true)}
         onNavigateToDatabase={() => setActiveView('database')}
         onNavigateToAdmin={() => setActiveView('admin')}
       />
+
+      {/* Modal de Edición de Perfil de Usuario y Fotografía */}
+      {isProfileModalOpen && currentUser && (
+        <ProfileModal
+          isOpen={isProfileModalOpen}
+          currentUser={currentUser}
+          onClose={() => setIsProfileModalOpen(false)}
+          onUserUpdated={(updatedUser) => {
+            setCurrentUser(updatedUser);
+            refreshInitiatives();
+            setGlobalAlert({
+              type: 'success',
+              title: 'Perfil Actualizado',
+              message: `Los datos de contacto y foto de perfil para ${updatedUser.name} se han actualizado correctamente.`
+            });
+          }}
+        />
+      )}
     </div>
   );
 };

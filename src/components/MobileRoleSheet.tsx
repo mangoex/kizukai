@@ -8,6 +8,7 @@ interface MobileRoleSheetProps {
   onClose: () => void;
   onSelectUser: (user: User) => void;
   onOpenLoginModal: () => void;
+  onOpenProfileModal?: () => void;
   onNavigateToDatabase: () => void;
   onNavigateToAdmin?: () => void;
 }
@@ -18,6 +19,7 @@ export const MobileRoleSheet: React.FC<MobileRoleSheetProps> = ({
   onClose,
   onSelectUser,
   onOpenLoginModal,
+  onOpenProfileModal,
   onNavigateToDatabase,
   onNavigateToAdmin
 }) => {
@@ -95,12 +97,58 @@ export const MobileRoleSheet: React.FC<MobileRoleSheetProps> = ({
                   {currentUser.role}
                 </span>
               </div>
-              <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--kiz-text)' }}>
-                {currentUser.name}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                <div style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--kiz-primary)',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 800,
+                  fontSize: '1rem',
+                  overflow: 'hidden',
+                  flexShrink: 0,
+                  border: '2px solid var(--kiz-accent)'
+                }}>
+                  {currentUser.avatarUrl ? (
+                    <img src={currentUser.avatarUrl} alt={currentUser.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <span>{currentUser.avatarInitials}</span>
+                  )}
+                </div>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--kiz-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {currentUser.name}
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--kiz-text-subtle)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    🏢 {currentUser.tenantName} ({currentUser.tenantId}) &middot; {currentUser.department}
+                  </div>
+                </div>
               </div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--kiz-text-subtle)', marginBottom: '0.5rem' }}>
-                🏢 {currentUser.tenantName} ({currentUser.tenantId}) &middot; {currentUser.department}
-              </div>
+
+              {onOpenProfileModal && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onOpenProfileModal();
+                  }}
+                  className="kiz-btn kiz-btn-outline kiz-btn-sm"
+                  style={{
+                    width: '100%',
+                    marginBottom: '0.6rem',
+                    justifyContent: 'center',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    minHeight: 36
+                  }}
+                >
+                  ⚙️ Editar Mi Perfil y Foto
+                </button>
+              )}
               <div style={{
                 fontSize: '0.72rem',
                 color: 'var(--kiz-text-muted)',

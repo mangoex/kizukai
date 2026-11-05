@@ -8,6 +8,7 @@ interface NavbarProps {
   onNavigate: (view: 'queues' | 'catalog' | 'reports' | 'database' | 'admin') => void;
   onOpenNewModal: () => void;
   onOpenLoginModal: () => void;
+  onOpenProfileModal?: () => void;
   onSwitchUser: (user: User) => void;
   onLogout: () => void;
   onOpenRoleSheet?: () => void;
@@ -19,6 +20,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onNavigate,
   onOpenNewModal,
   onOpenLoginModal,
+  onOpenProfileModal,
   onSwitchUser,
   onLogout,
   onOpenRoleSheet
@@ -72,18 +74,50 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         {currentUser ? (
-          <button
-            type="button"
-            onClick={onOpenRoleSheet || (() => setShowProfileSwitcher(true))}
-            className="kiz-mobile-role-pill"
-            aria-label={`Cambiar rol. Rol actual: ${currentUser.role}`}
-          >
-            <span>👤</span>
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {currentUser.name.split(' ')[0]} ({currentUser.tenantId})
-            </span>
-            <span style={{ fontSize: '0.65rem', opacity: 0.8 }}>▾</span>
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            {onOpenProfileModal && (
+              <button
+                type="button"
+                onClick={onOpenProfileModal}
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  border: '1.5px solid rgba(255, 255, 255, 0.4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#ffffff',
+                  fontSize: '0.8rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  overflow: 'hidden'
+                }}
+                aria-label="Editar mi perfil"
+                title="Editar mi perfil y fotografía"
+              >
+                {currentUser.avatarUrl ? (
+                  <img src={currentUser.avatarUrl} alt={currentUser.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <span>{currentUser.avatarInitials}</span>
+                )}
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={onOpenRoleSheet || (() => setShowProfileSwitcher(true))}
+              className="kiz-mobile-role-pill"
+              aria-label={`Cambiar rol. Rol actual: ${currentUser.role}`}
+            >
+              <span>👤</span>
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {currentUser.name.split(' ')[0]} ({currentUser.tenantId})
+              </span>
+              <span style={{ fontSize: '0.65rem', opacity: 0.8 }}>▾</span>
+            </button>
+          </div>
         ) : (
           <button
             type="button"
@@ -284,8 +318,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                   aria-expanded={showProfileSwitcher}
                 >
                   <span style={{
-                    width: 24,
-                    height: 24,
+                    width: 26,
+                    height: 26,
                     borderRadius: '50%',
                     backgroundColor: 'var(--kiz-primary)',
                     color: '#ffffff',
@@ -293,9 +327,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: '0.7rem',
-                    fontWeight: 700
+                    fontWeight: 700,
+                    overflow: 'hidden'
                   }}>
-                    {currentUser.avatarInitials}
+                    {currentUser.avatarUrl ? (
+                      <img src={currentUser.avatarUrl} alt={currentUser.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      currentUser.avatarInitials
+                    )}
                   </span>
                   <div style={{ textAlign: 'left', lineHeight: 1.1 }}>
                     <div style={{ fontSize: '0.75rem', fontWeight: 700 }}>{currentUser.name}</div>
@@ -406,28 +445,44 @@ export const Navbar: React.FC<NavbarProps> = ({
                       paddingTop: '0.4rem',
                       borderTop: '1px solid var(--kiz-border-subtle)',
                       display: 'flex',
-                      justifyContent: 'space-between'
+                      flexDirection: 'column',
+                      gap: '0.3rem'
                     }}>
-                      <button
-                        onClick={() => {
-                          setShowProfileSwitcher(false);
-                          onOpenLoginModal();
-                        }}
-                        className="kiz-btn kiz-btn-ghost kiz-btn-sm"
-                        style={{ fontSize: '0.72rem' }}
-                      >
-                        Pantalla de Login
-                      </button>
-                      <button
-                        onClick={() => {
-                          setShowProfileSwitcher(false);
-                          onLogout();
-                        }}
-                        className="kiz-btn kiz-btn-ghost kiz-btn-sm"
-                        style={{ color: 'var(--kiz-danger)', fontSize: '0.72rem' }}
-                      >
-                        Cerrar Sesión
-                      </button>
+                      {onOpenProfileModal && (
+                        <button
+                          onClick={() => {
+                            setShowProfileSwitcher(false);
+                            onOpenProfileModal();
+                          }}
+                          className="kiz-btn kiz-btn-primary kiz-btn-sm"
+                          style={{ width: '100%', fontSize: '0.75rem', justifyContent: 'center' }}
+                        >
+                          ⚙️ Editar Mi Perfil y Foto
+                        </button>
+                      )}
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <button
+                          onClick={() => {
+                            setShowProfileSwitcher(false);
+                            onOpenLoginModal();
+                          }}
+                          className="kiz-btn kiz-btn-ghost kiz-btn-sm"
+                          style={{ fontSize: '0.72rem' }}
+                        >
+                          Pantalla de Login
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowProfileSwitcher(false);
+                            onLogout();
+                          }}
+                          className="kiz-btn kiz-btn-ghost kiz-btn-sm"
+                          style={{ color: 'var(--kiz-danger)', fontSize: '0.72rem' }}
+                        >
+                          Cerrar Sesión
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}

@@ -40,6 +40,9 @@ export interface User {
   department?: string;
   requiresMfa: boolean;
   avatarInitials: string;
+  avatarUrl?: string;
+  phoneNumber?: string;
+  jobTitle?: string;
 }
 
 export interface Diagnostic {

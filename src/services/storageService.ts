@@ -983,4 +983,49 @@ export class StorageService {
 
     return { success: true, user: newUser };
   }
+
+  public static updateUserProfile(
+    userId: string,
+    updates: { name?: string; email?: string; department?: string; phoneNumber?: string; jobTitle?: string; avatarUrl?: string }
+  ): { success: boolean; user?: User; error?: string } {
+    const users = this.getUsers();
+    const idx = users.findIndex((u) => u.id === userId);
+    if (idx === -1) {
+      return { success: false, error: 'Usuario no encontrado.' };
+    }
+
+    const current = users[idx];
+    const newName = updates.name !== undefined ? updates.name.trim() : current.name;
+    const initials = newName.split(' ').map((p) => p[0]).join('').slice(0, 2).toUpperCase() || current.avatarInitials;
+
+    const updatedUser: User = {
+      ...current,
+      name: newName,
+      email: updates.email !== undefined ? updates.email.trim().toLowerCase() : current.email,
+      department: updates.department !== undefined ? updates.department.trim() : current.department,
+      phoneNumber: updates.phoneNumber !== undefined ? updates.phoneNumber.trim() : current.phoneNumber,
+      jobTitle: updates.jobTitle !== undefined ? updates.jobTitle.trim() : current.jobTitle,
+      avatarUrl: updates.avatarUrl !== undefined ? updates.avatarUrl : current.avatarUrl,
+      avatarInitials: initials
+    };
+
+    users[idx] = updatedUser;
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+
+    this.logAudit({
+      entity: 'users',
+      entityId: updatedUser.id,
+      action: 'USER_PROFILE_UPDATED',
+      performedBy: updatedUser.email,
+      tenantId: updatedUser.tenantId,
+      payloadSnapshot: {
+        userId: updatedUser.id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        hasAvatar: Boolean(updatedUser.avatarUrl)
+      }
+    });
+
+    return { success: true, user: updatedUser };
+  }
 }

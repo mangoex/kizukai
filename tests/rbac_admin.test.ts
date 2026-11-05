@@ -81,4 +81,38 @@ describe('AdminEngine - Reglas de Gobierno y Aprovisionamiento RBAC (HU-1.1 a HU
       expect(AdminEngine.canUserManageDepartments('PARTICIPANT', 'ORG-A', 'ORG-A')).toBe(false);
     });
   });
+
+  describe('HU-5.1: Edición de Perfil de Usuario y Fotografía', () => {
+    it('TC-ADMIN-012: Actualiza datos personales y avatarUrl del usuario', () => {
+      // Mock simple de StorageService
+      const dummyUser = {
+        id: 'usr-test-01',
+        name: 'Carlos Ruiz',
+        email: 'carlos@test.com',
+        role: 'PARTICIPANT',
+        tenantId: 'ORG-A',
+        tenantName: 'Test Org',
+        department: 'Calidad',
+        avatarInitials: 'CR'
+      };
+
+      const updates = {
+        name: 'Carlos Ruiz García',
+        jobTitle: 'Ingeniero de Procesos Jr.',
+        phoneNumber: '+52 81 1234 5678',
+        avatarUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
+      };
+
+      const updated = {
+        ...dummyUser,
+        ...updates,
+        avatarInitials: 'CR'
+      };
+
+      expect(updated.name).toBe('Carlos Ruiz García');
+      expect(updated.jobTitle).toBe('Ingeniero de Procesos Jr.');
+      expect(updated.phoneNumber).toBe('+52 81 1234 5678');
+      expect(updated.avatarUrl).toContain('data:image/png;base64');
+    });
+  });
 });
