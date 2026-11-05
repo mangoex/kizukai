@@ -1,0 +1,416 @@
+openapi: 3.0.3
+info:
+  title: Kizukai Project Hub API
+  version: 1.0.0
+  description: >
+    Especificación formal RESTful API para Kizukai Project Hub (Multi-Tenant).
+    Implementa el Ciclo de los 6 Pasos, el Modelo K0-K1-K2-K3, la Máquina de 12 Estados
+    con trazabilidad inmutable y el control de acceso RBAC con MFA obligatorio para
+    Coordinadores, Consultores y Administradores Técnicos.
+servers:
+  - url: /api
+    description: Vercel Serverless API / Producción Multi-Tenant
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        Token JWT de corta duración (máx. 60 minutos). Incluye claims `sub` (user_id),
+        `organization_id` (UUID del tenant o null para consultores globales),
+        `roles` (array de RoleId) y `amr` (`mfa` obligatorio para COORDINATOR, CONSULTANT, TECH_ADMIN).
+  parameters:
+    TenantHeader:
+      in: header
+      name: X-Organization-Id
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Identificador del Tenant activo para aislamiento estricto de datos.
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [code, message, timestamp]
+      properties:
+        code:
+          type: string
+          example: INVALID_STATE_TRANSITION
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    BusinessStateId:
+      type: string
+      enum:
+        - BORRADOR
+        - POR_APROBAR
+        - PENDIENTE_ASIGNACION_MENTOR
+        - PENDIENTE_PLAN_IMPLEMENTACION
+        - EN_IMPLEMENTACION
+        - PENDIENTE_RESULTADOS
+        - POR_EVALUAR
+        - POR_DOCUMENTAR
+        - FINALIZADA
+        - DEVUELTA_PARA_AJUSTES
+        - RECHAZADA
+        - CANCELADA
+    InitiativeResponse:
+      type: object
+      required:
+        - id
+        - organization_id
+        - program_id
+        - department_id
+        - tracking_code
+        - title
+        - k0_baseline
+        - k1_job_function
+        - k2_proactivity
+        - k3_expected_impact
+        - strategic_guideline
+        - zero_investment_confirmed
+        - current_state_id
+        - created_by_user_id
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        organization_id:
+          type: string
+          format: uuid
+        program_id:
+          type: string
+          format: uuid
+        department_id:
+          type: string
+          format: uuid
+        tracking_code:
+          type: string
+          example: KIZ-2026-0001
+        title:
+          type: string
+        k0_baseline:
+          type: string
+        k1_job_function:
+          type: string
+        k2_proactivity:
+          type: string
+        k3_expected_impact:
+          type: string
+        strategic_guideline:
+          type: string
+        zero_investment_confirmed:
+          type: boolean
+        current_state_id:
+          $ref: '#/components/schemas/BusinessStateId'
+        return_target_state_id:
+          $ref: '#/components/schemas/BusinessStateId'
+          nullable: true
+        created_by_user_id:
+          type: string
+          format: uuid
+        active_mentor_id:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        closed_at:
+          type: string
+          format: date-time
+          nullable: true
+security:
+  - BearerAuth: []
+paths:
+  /auth/login:
+    post:
+      tags: [auth]
+      summary: Autenticación OAuth2/OIDC o credenciales locales (Argon2id) con verificación MFA
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                mfa_code:
+                  type: string
+      responses:
+        '200':
+          description: Token JWT emitido exitosamente
+        '401':
+          description: Credenciales inválidas o MFA requerido para el rol
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /organizations:
+    get:
+      tags: [organizations]
+      summary: Lista empresas cliente autorizadas para el usuario
+      responses:
+        '200':
+          description: Lista de organizaciones
+        '401':
+          description: No autenticado
+        '403':
+          description: Rol sin permiso de lectura multiempresa
+  /programs:
+    get:
+      tags: [programs]
+      summary: Lista cohortes y programas del tenant activo
+      parameters:
+        - $ref: '#/components/parameters/TenantHeader'
+      responses:
+        '200':
+          description: Lista de programas del tenant
+        '403':
+          description: Violación de aislamiento Multi-Tenant
+  /initiatives:
+    get:
+      tags: [initiatives]
+      summary: Consulta bandeja de iniciativas filtrada por tenant, programa, estado y rol
+      parameters:
+        - $ref: '#/components/parameters/TenantHeader'
+        - in: query
+          name: program_id
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: state_id
+          schema:
+            $ref: '#/components/schemas/BusinessStateId'
+      responses:
+        '200':
+          description: Lista paginada de iniciativas (< 3.0s SLA)
+        '403':
+          description: Acceso denegado a otro tenant
+    post:
+      tags: [initiatives]
+      summary: Registra una nueva iniciativa K2 y opcionalmente la envía a Filtro Técnico
+      parameters:
+        - $ref: '#/components/parameters/TenantHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - program_id
+                - department_id
+                - title
+                - k0_baseline
+                - k1_job_function
+                - k2_proactivity
+                - k3_expected_impact
+                - strategic_guideline
+                - zero_investment_confirmed
+              properties:
+                program_id:
+                  type: string
+                  format: uuid
+                department_id:
+                  type: string
+                  format: uuid
+                title:
+                  type: string
+                k0_baseline:
+                  type: string
+                k1_job_function:
+                  type: string
+                k2_proactivity:
+                  type: string
+                k3_expected_impact:
+                  type: string
+                strategic_guideline:
+                  type: string
+                zero_investment_confirmed:
+                  type: boolean
+                submit_immediately:
+                  type: boolean
+      responses:
+        '201':
+          description: Iniciativa creada con folio KIZ-YYYY-XXXX
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InitiativeResponse'
+        '400':
+          description: Datos incompletos
+        '409':
+          description: Folio o iniciativa duplicada
+        '422':
+          description: Violación de Cero Inversión (ZeroInvestmentRequiredException)
+  /initiatives/{id}/workspace:
+    get:
+      tags: [initiatives]
+      summary: Obtiene el Espacio de Trabajo Unificado de la iniciativa
+      parameters:
+        - $ref: '#/components/parameters/TenantHeader'
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Vista consolidada del Workspace
+        '403':
+          description: Violación de aislamiento Multi-Tenant
+        '404':
+          description: Iniciativa no encontrada
+  /initiatives/{id}/transitions:
+    post:
+      tags: [initiatives]
+      summary: Ejecuta una transición en la Máquina de Estados validando guardas y RBAC
+      parameters:
+        - $ref: '#/components/parameters/TenantHeader'
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [event]
+              properties:
+                event:
+                  type: string
+                notes:
+                  type: string
+      responses:
+        '200':
+          description: Estado actualizado y evento registrado en state_transition_history
+        '403':
+          description: Rol no autorizado para la transición
+        '422':
+          description: Condición de guarda incumplida (InvalidStateTransitionException)
+  /mentorships:
+    post:
+      tags: [mentorships]
+      summary: Asigna o reasigna un mentor activo de la misma organización a una iniciativa aprobada
+      parameters:
+        - $ref: '#/components/parameters/TenantHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [initiative_id, mentor_user_id]
+              properties:
+                initiative_id:
+                  type: string
+                  format: uuid
+                mentor_user_id:
+                  type: string
+                  format: uuid
+                reassignment_reason:
+                  type: string
+      responses:
+        '200':
+          description: Mentor asignado y estado cambiado a PENDIENTE_PLAN_IMPLEMENTACION
+        '403':
+          description: Solo COORDINATOR o CONSULTANT pueden asignar mentor
+        '422':
+          description: Mentor no pertenece a la organización o se encuentra inactivo
+  /stages/{initiativeId}/plan:
+    post:
+      tags: [stages]
+      summary: Registra y somete el plan de actividades (máximo 8 semanas / 56 días)
+      parameters:
+        - $ref: '#/components/parameters/TenantHeader'
+        - in: path
+          name: initiativeId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Plan registrado
+        '422':
+          description: MaxImplementationWindowExceededException (> 56 días)
+  /evidences:
+    post:
+      tags: [evidences]
+      summary: Carga una nueva evidencia o versión incremental sin sobreescribir versiones congeladas
+      parameters:
+        - $ref: '#/components/parameters/TenantHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [initiative_id, file_name, storage_url, mime_type, file_size_bytes]
+              properties:
+                initiative_id:
+                  type: string
+                  format: uuid
+                deliverable_id:
+                  type: string
+                file_name:
+                  type: string
+                storage_url:
+                  type: string
+                mime_type:
+                  type: string
+                file_size_bytes:
+                  type: integer
+      responses:
+        '201':
+          description: Evidencia registrada con version_number autocalculado
+  /reports/export:
+    post:
+      tags: [reports]
+      summary: Exporta los Reportes Prioritarios A, B o C en formato Excel (.xlsx) o CSV (< 3.0s)
+      parameters:
+        - $ref: '#/components/parameters/TenantHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [report_type, format]
+              properties:
+                report_type:
+                  type: string
+                  enum:
+                    - REPORT_A_PARTICIPANT_PERFORMANCE
+                    - REPORT_B_COHORT_GOALS
+                    - REPORT_C_IN_PROGRESS_TRACKING
+                format:
+                  type: string
+                  enum: [XLSX, CSV]
+      responses:
+        '200':
+          description: Archivo binario con metadatos de auditoría UTC en cabecera/pie
+  /notifications:
+    get:
+      tags: [notifications]
+      summary: Lista notificaciones del usuario autenticado
+      responses:
+        '200':
+          description: Lista de notificaciones

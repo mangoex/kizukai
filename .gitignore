@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.vercel/
+.pytest_cache/
+__pycache__/
+*.pyc
+.coverage
+coverage/
+.env
+.env.*
+!.env.example
+*.log

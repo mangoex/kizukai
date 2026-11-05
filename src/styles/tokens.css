@@ -1,0 +1,665 @@
+/* Kizukai Project Hub - Design System Tokens & Global Base
+   Inspirado en la excelencia operacional japonesa: Gemba (planta real), Kaizen (mejora continua) y Kizukai (atención proactiva).
+   Cumplimiento WCAG 2.1 AA (contraste >= 4.5:1 texto, >= 3:1 componentes de UI).
+*/
+
+:root {
+  /* Paleta Industrial Japonesa */
+  --kiz-primary: #1a2d42;        /* Azul Índigo Industrial / Acero Kaizen */
+  --kiz-primary-hover: #101e2e;
+  --kiz-primary-light: #eaf0f6;
+  --kiz-primary-focus: #0f1c2b;
+
+  --kiz-accent: #c44536;         /* Rojo Cinabrio / Urgencia Kaizen / Puntos focales */
+  --kiz-accent-hover: #a53427;
+  --kiz-accent-light: #fdf1f0;
+
+  --kiz-bg: #f4f6f9;             /* Fondo gris pizarra industrial claro */
+  --kiz-surface: #ffffff;        /* Superficie blanca pura de tarjetas */
+  --kiz-surface-subtle: #f8fafc;
+  --kiz-surface-muted: #edf2f7;
+
+  /* Colores Semánticos */
+  --kiz-success: #15803d;        /* Verde Gemba Verificado */
+  --kiz-success-bg: #ecfdf5;
+  --kiz-success-border: #86efac;
+
+  --kiz-warning: #b45309;        /* Ámbar Alerta Operacional */
+  --kiz-warning-bg: #fffbeb;
+  --kiz-warning-border: #fcd34d;
+
+  --kiz-danger: #b91c1c;         /* Rojo Paro de Línea (Andon) */
+  --kiz-danger-bg: #fef2f2;
+  --kiz-danger-border: #fca5a5;
+
+  --kiz-info: #0284c7;           /* Azul Metodológico */
+  --kiz-info-bg: #f0f9ff;
+  --kiz-info-border: #7dd3fc;
+
+  --kiz-purple: #7e22ce;         /* Púrpura Calidad / Auditoría */
+  --kiz-purple-bg: #faf5ff;
+  --kiz-purple-border: #d8b4fe;
+
+  /* Tipografía y Contraste */
+  --kiz-text: #0f172a;           /* Texto primario (Ratio 13.5:1 sobre blanco) */
+  --kiz-text-muted: #334155;     /* Texto secundario (Ratio 7.2:1 sobre blanco) */
+  --kiz-text-subtle: #64748b;    /* Metadatos (Ratio 4.6:1 sobre blanco) */
+  --kiz-text-inverse: #ffffff;
+
+  --kiz-border: #cbd5e1;         /* Bordes definidos industriales */
+  --kiz-border-subtle: #e2e8f0;
+  --kiz-border-focus: #1a2d42;
+
+  /* Radios y Espaciados */
+  --kiz-radius-xs: 3px;
+  --kiz-radius-sm: 6px;
+  --kiz-radius: 8px;
+  --kiz-radius-lg: 12px;
+  --kiz-radius-xl: 16px;
+  --kiz-radius-full: 9999px;
+
+  /* Sombras Precisas (Mínimo clutter) */
+  --kiz-shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+  --kiz-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+  --kiz-shadow-md: 0 8px 12px -2px rgba(15, 23, 42, 0.08), 0 4px 6px -3px rgba(15, 23, 42, 0.05);
+  --kiz-shadow-lg: 0 16px 24px -4px rgba(15, 23, 42, 0.1), 0 8px 10px -4px rgba(15, 23, 42, 0.06);
+
+  /* Fuentes */
+  --kiz-font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --kiz-font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+
+  /* Transición */
+  --kiz-transition: all 0.15s ease-in-out;
+}
+
+/* Reset y Accesibilidad Base */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--kiz-font-sans);
+  background-color: var(--kiz-bg);
+  color: var(--kiz-text);
+  min-height: 100vh;
+}
+
+/* WCAG 2.1 AA Focus-Visible */
+:focus-visible {
+  outline: 3px solid var(--kiz-accent);
+  outline-offset: 2px;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+a {
+  color: var(--kiz-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Tipografía Escalar */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  color: var(--kiz-text);
+  line-height: 1.25;
+}
+
+h1 { font-size: 1.75rem; letter-spacing: -0.02em; }
+h2 { font-size: 1.35rem; letter-spacing: -0.01em; }
+h3 { font-size: 1.15rem; }
+h4 { font-size: 1rem; }
+
+/* Badges de los 12 Estados de Negocio (PRD Kizukai) */
+.kiz-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: var(--kiz-font-mono);
+  border-radius: var(--kiz-radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.kiz-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* 1. BORRADOR */
+.state-BORRADOR {
+  background-color: #f1f5f9;
+  color: #334155;
+  border-color: #cbd5e1;
+}
+.state-BORRADOR .kiz-badge-dot { background-color: #64748b; }
+
+/* 2. POR_APROBAR */
+.state-POR_APROBAR {
+  background-color: #fef3c7;
+  color: #92400e;
+  border-color: #fcd34d;
+}
+.state-POR_APROBAR .kiz-badge-dot { background-color: #d97706; }
+
+/* 3. RECHAZADA */
+.state-RECHAZADA {
+  background-color: #fef2f2;
+  color: #991b1b;
+  border-color: #fca5a5;
+}
+.state-RECHAZADA .kiz-badge-dot { background-color: #dc2626; }
+
+/* 4. PENDIENTE_ASIGNACION_MENTOR */
+.state-PENDIENTE_ASIGNACION_MENTOR {
+  background-color: #f0fdf4;
+  color: #166534;
+  border-color: #86efac;
+}
+.state-PENDIENTE_ASIGNACION_MENTOR .kiz-badge-dot { background-color: #16a34a; }
+
+/* 5. PENDIENTE_PLAN_IMPLEMENTACION */
+.state-PENDIENTE_PLAN_IMPLEMENTACION {
+  background-color: #eff6ff;
+  color: #1e40af;
+  border-color: #bfdbfe;
+}
+.state-PENDIENTE_PLAN_IMPLEMENTACION .kiz-badge-dot { background-color: #2563eb; }
+
+/* 6. EN_IMPLEMENTACION */
+.state-EN_IMPLEMENTACION {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border-color: #7dd3fc;
+  font-weight: 700;
+}
+.state-EN_IMPLEMENTACION .kiz-badge-dot { background-color: #0284c7; }
+
+/* 7. DEVUELTA_PARA_AJUSTES (Alerta Crítica) */
+.state-DEVUELTA_PARA_AJUSTES {
+  background-color: #fff7ed;
+  color: #c2410c;
+  border-color: #fdba74;
+  box-shadow: 0 0 0 1px #ea580c;
+}
+.state-DEVUELTA_PARA_AJUSTES .kiz-badge-dot { background-color: #ea580c; }
+
+/* 8. PENDIENTE_RESULTADOS */
+.state-PENDIENTE_RESULTADOS {
+  background-color: #faf5ff;
+  color: #6b21a8;
+  border-color: #d8b4fe;
+}
+.state-PENDIENTE_RESULTADOS .kiz-badge-dot { background-color: #9333ea; }
+
+/* 9. POR_EVALUAR */
+.state-POR_EVALUAR {
+  background-color: #fef9c3;
+  color: #854d0e;
+  border-color: #fde047;
+}
+.state-POR_EVALUAR .kiz-badge-dot { background-color: #ca8a04; }
+
+/* 10. POR_DOCUMENTAR */
+.state-POR_DOCUMENTAR {
+  background-color: #ecfeff;
+  color: #155e75;
+  border-color: #a5f3fc;
+}
+.state-POR_DOCUMENTAR .kiz-badge-dot { background-color: #0891b2; }
+
+/* 11. FINALIZADA */
+.state-FINALIZADA {
+  background-color: #dcfce7;
+  color: #14532d;
+  border-color: #4ade80;
+  font-weight: 700;
+}
+.state-FINALIZADA .kiz-badge-dot { background-color: #16a34a; }
+
+/* 12. CANCELADA */
+.state-CANCELADA {
+  background-color: #f3f4f6;
+  color: #4b5563;
+  border-color: #d1d5db;
+  text-decoration: line-through;
+}
+.state-CANCELADA .kiz-badge-dot { background-color: #9ca3af; }
+
+/* Badges de Roles RBAC */
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--kiz-radius-sm);
+  font-size: 0.72rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.role-PARTICIPANT {
+  background: #f1f5f9;
+  color: #334155;
+  border-color: #cbd5e1;
+}
+
+.role-MENTOR {
+  background: #eff6ff;
+  color: #1e40af;
+  border-color: #bfdbfe;
+}
+
+.role-COORDINATOR {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fcd34d;
+}
+
+.role-CONSULTANT {
+  background: #fae8ff;
+  color: #86198f;
+  border-color: #f0abfc;
+}
+
+.role-TECH_ADMIN {
+  background: #fee2e2;
+  color: #991b1b;
+  border-color: #fca5a5;
+}
+
+/* Botones Base & Variantes */
+.kiz-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1rem;
+  border-radius: var(--kiz-radius);
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: var(--kiz-transition);
+  text-decoration: none;
+  min-height: 40px;
+}
+
+.kiz-btn-primary {
+  background-color: var(--kiz-primary);
+  color: #ffffff;
+}
+.kiz-btn-primary:hover:not(:disabled) {
+  background-color: var(--kiz-primary-hover);
+}
+
+.kiz-btn-accent {
+  background-color: var(--kiz-accent);
+  color: #ffffff;
+}
+.kiz-btn-accent:hover:not(:disabled) {
+  background-color: var(--kiz-accent-hover);
+}
+
+.kiz-btn-secondary {
+  background-color: var(--kiz-surface);
+  color: var(--kiz-text);
+  border-color: var(--kiz-border);
+}
+.kiz-btn-secondary:hover:not(:disabled) {
+  background-color: var(--kiz-surface-muted);
+  border-color: var(--kiz-text-subtle);
+}
+
+.kiz-btn-danger {
+  background-color: var(--kiz-danger);
+  color: #ffffff;
+}
+.kiz-btn-danger:hover:not(:disabled) {
+  background-color: #991b1b;
+}
+
+.kiz-btn-success {
+  background-color: var(--kiz-success);
+  color: #ffffff;
+}
+.kiz-btn-success:hover:not(:disabled) {
+  background-color: #14532d;
+}
+
+.kiz-btn-ghost {
+  background: transparent;
+  color: var(--kiz-text-muted);
+}
+.kiz-btn-ghost:hover:not(:disabled) {
+  background: var(--kiz-surface-muted);
+  color: var(--kiz-text);
+}
+
+.kiz-btn-sm {
+  padding: 0.3rem 0.65rem;
+  font-size: 0.775rem;
+  min-height: 32px;
+}
+
+.kiz-btn-lg {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  min-height: 48px;
+}
+
+.kiz-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Tarjetas */
+.kiz-card {
+  background-color: var(--kiz-surface);
+  border: 1px solid var(--kiz-border);
+  border-radius: var(--kiz-radius-lg);
+  box-shadow: var(--kiz-shadow-sm);
+  padding: 1.25rem;
+  transition: var(--kiz-transition);
+}
+
+.kiz-card-hover:hover {
+  box-shadow: var(--kiz-shadow);
+  border-color: #94a3b8;
+}
+
+/* Formularios & Controles */
+.kiz-label {
+  display: block;
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: var(--kiz-text-muted);
+  margin-bottom: 0.35rem;
+}
+
+.kiz-input, .kiz-select, .kiz-textarea {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--kiz-border);
+  border-radius: var(--kiz-radius);
+  background-color: var(--kiz-surface);
+  color: var(--kiz-text);
+  font-size: 0.875rem;
+  transition: var(--kiz-transition);
+}
+
+.kiz-input:focus, .kiz-select:focus, .kiz-textarea:focus {
+  border-color: var(--kiz-primary);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(26, 45, 66, 0.15);
+}
+
+.kiz-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Tablas Accesibles */
+.kiz-table-container {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--kiz-border);
+  border-radius: var(--kiz-radius-lg);
+  background: var(--kiz-surface);
+}
+
+.kiz-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+.kiz-table th {
+  background-color: var(--kiz-surface-subtle);
+  color: var(--kiz-text-muted);
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--kiz-border);
+  font-family: var(--kiz-font-sans);
+  text-transform: uppercase;
+  font-size: 0.725rem;
+  letter-spacing: 0.05em;
+}
+
+.kiz-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--kiz-border-subtle);
+  color: var(--kiz-text);
+  vertical-align: middle;
+}
+
+.kiz-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+/* Modales */
+.kiz-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.kiz-modal {
+  background: var(--kiz-surface);
+  border-radius: var(--kiz-radius-xl);
+  box-shadow: var(--kiz-shadow-lg);
+  width: 100%;
+  max-width: 900px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border: 1px solid var(--kiz-border);
+  display: flex;
+  flex-direction: column;
+}
+
+.kiz-modal-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--kiz-border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  background: var(--kiz-surface);
+  z-index: 10;
+}
+
+.kiz-modal-body {
+  padding: 1.5rem;
+  flex: 1;
+}
+
+.kiz-modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--kiz-border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  background: var(--kiz-surface-subtle);
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+}
+
+/* Pestañas (Tabs) */
+.kiz-tabs {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 2px solid var(--kiz-border-subtle);
+  padding: 0 0.5rem;
+  overflow-x: auto;
+}
+
+.kiz-tab-btn {
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--kiz-text-muted);
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  transition: var(--kiz-transition);
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  white-space: nowrap;
+}
+
+.kiz-tab-btn:hover {
+  color: var(--kiz-text);
+}
+
+.kiz-tab-btn[aria-selected="true"] {
+  color: var(--kiz-primary);
+  border-bottom-color: var(--kiz-accent);
+}
+
+/* Barra de Progreso */
+.kiz-progress-bar {
+  width: 100%;
+  height: 8px;
+  background-color: var(--kiz-surface-muted);
+  border-radius: var(--kiz-radius-full);
+  overflow: hidden;
+}
+
+.kiz-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--kiz-primary) 0%, var(--kiz-accent) 100%);
+  border-radius: var(--kiz-radius-full);
+  transition: width 0.3s ease;
+}
+
+/* Tarjeta de Próxima Acción Destacada */
+.kiz-action-card {
+  border: 2px solid var(--kiz-primary);
+  background: linear-gradient(135deg, #f8fafc 0%, #eef4f9 100%);
+  border-radius: var(--kiz-radius-lg);
+  padding: 1.25rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.kiz-action-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 6px;
+  background-color: var(--kiz-accent);
+}
+
+/* Alertas & Mensajes */
+.kiz-alert {
+  padding: 0.85rem 1.15rem;
+  border-radius: var(--kiz-radius);
+  font-size: 0.875rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  border: 1px solid;
+  margin-bottom: 1rem;
+}
+
+.kiz-alert-warning {
+  background-color: var(--kiz-warning-bg);
+  border-color: var(--kiz-warning-border);
+  color: #78350f;
+}
+
+.kiz-alert-danger {
+  background-color: var(--kiz-danger-bg);
+  border-color: var(--kiz-danger-border);
+  color: #7f1d1d;
+}
+
+.kiz-alert-success {
+  background-color: var(--kiz-success-bg);
+  border-color: var(--kiz-success-border);
+  color: #14532d;
+}
+
+.kiz-alert-info {
+  background-color: var(--kiz-info-bg);
+  border-color: var(--kiz-info-border);
+  color: #0c4a6e;
+}
+
+/* Layout y Grillas Responsivas */
+.kiz-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.25rem;
+}
+
+.kiz-grid-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
+}
+
+/* Adaptación para Tablet en Gemba y Móvil */
+@media (max-width: 992px) {
+  .kiz-container {
+    padding: 1rem;
+  }
+  .kiz-btn {
+    min-height: 44px; /* Touch target Gemba */
+  }
+  .kiz-grid-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  html {
+    font-size: 15px;
+  }
+  .kiz-container {
+    padding: 0.75rem;
+  }
+  .kiz-modal {
+    max-height: 95vh;
+    border-radius: var(--kiz-radius-lg);
+  }
+  .kiz-modal-header, .kiz-modal-body, .kiz-modal-footer {
+    padding: 1rem;
+  }
+}

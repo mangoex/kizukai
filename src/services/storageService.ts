@@ -1,0 +1,610 @@
+import {
+  Initiative,
+  User,
+  BusinessState,
+  AuditLog,
+  StateTransition,
+  Evidence,
+  Gemba5SChecklist,
+  StandardizationSop
+} from '../types/index.ts';
+import {
+  INITIAL_INITIATIVES,
+  INITIAL_AUDIT_LOGS,
+  DATABASE_ENTITIES
+} from '../data/seedData.ts';
+
+const STORAGE_KEYS = {
+  INITIATIVES: 'kizukai_hub_initiatives_v1',
+  AUDIT_LOGS: 'kizukai_hub_audit_logs_v1',
+  CURRENT_USER: 'kizukai_hub_active_user_v1'
+};
+
+export class StorageService {
+  public static getInitiativesRaw(): Initiative[] {
+    const raw = localStorage.getItem(STORAGE_KEYS.INITIATIVES);
+    if (!raw) {
+      localStorage.setItem(STORAGE_KEYS.INITIATIVES, JSON.stringify(INITIAL_INITIATIVES));
+      return INITIAL_INITIATIVES;
+    }
+    try {
+      return JSON.parse(raw);
+    } catch {
+      localStorage.setItem(STORAGE_KEYS.INITIATIVES, JSON.stringify(INITIAL_INITIATIVES));
+      return INITIAL_INITIATIVES;
+    }
+  }
+
+  public static saveInitiativesRaw(list: Initiative[]): void {
+    localStorage.setItem(STORAGE_KEYS.INITIATIVES, JSON.stringify(list));
+  }
+
+  public static getAuditLogs(): AuditLog[] {
+    const raw = localStorage.getItem(STORAGE_KEYS.AUDIT_LOGS);
+    if (!raw) {
+      localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(INITIAL_AUDIT_LOGS));
+      return INITIAL_AUDIT_LOGS;
+    }
+    try {
+      return JSON.parse(raw);
+    } catch {
+      localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(INITIAL_AUDIT_LOGS));
+      return INITIAL_AUDIT_LOGS;
+    }
+  }
+
+  public static logAudit(entry: Omit<AuditLog, 'id' | 'timestamp'>): AuditLog {
+    const logs = this.getAuditLogs();
+    const newLog: AuditLog = {
+      id: `aud-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      timestamp: new Date().toISOString(),
+      ...entry
+    };
+    logs.unshift(newLog);
+    localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(logs.slice(0, 100)));
+    return newLog;
+  }
+
+  /**
+   * Obtiene iniciativas filtradas por el Tenant y Rol del usuario.
+   * Regla de segregación: TECH_ADMIN no puede ver contenido funcional de iniciativas.
+   */
+  public static getInitiativesForUser(user: User): Initiative[] {
+    if (user.role === 'TECH_ADMIN') {
+      return [];
+    }
+
+    const all = this.getInitiativesRaw();
+
+    // Consultor Kizukai Global tiene visión multiempresa (ve ORG-A y ORG-B)
+    if (user.role === 'CONSULTANT') {
+      return all;
+    }
+
+    // El resto de los roles están estrictamente aislados en su propio Tenant
+    return all.filter((item) => item.tenantId === user.tenantId);
+  }
+
+  /**
+   * Obtiene una iniciativa por ID validando seguridad Multi-Tenant y Segregación de Funciones.
+   */
+  public static getInitiativeByIdSecure(
+    id: string,
+    user: User
+  ): { data?: Initiative; error?: string; errorCode?: string } {
+    if (user.role === 'TECH_ADMIN') {
+      this.logAudit({
+        entity: 'initiatives',
+        entityId: id,
+        action: 'TECH_ADMIN_ACCESS_BLOCKED',
+        performedBy: user.email,
+        tenantId: user.tenantId,
+        payloadSnapshot: {
+          reason: 'Segregación RBAC: TECH_ADMIN bloqueado de contenido funcional',
+          attemptedId: id
+        }
+      });
+      return {
+        errorCode: '403_TECH_ADMIN_BLOCKED',
+        error:
+          '403 Forbidden - Segregación RBAC: El Administrador Técnico tiene privilegios de auditoría de infraestructura y parámetros pero tiene bloqueada la inspección del contenido funcional de iniciativas.'
+      };
+    }
+
+    const all = this.getInitiativesRaw();
+    const found = all.find((item) => item.id === id);
+
+    if (!found) {
+      return { errorCode: '404_NOT_FOUND', error: 'Iniciativa no encontrada.' };
+    }
+
+    // Verificación de aislamiento multi-tenant
+    if (user.role !== 'CONSULTANT' && found.tenantId !== user.tenantId) {
+      this.logAudit({
+        entity: 'initiatives',
+        entityId: id,
+        action: 'CROSS_TENANT_ACCESS_DENIED',
+        performedBy: user.email,
+        tenantId: user.tenantId,
+        payloadSnapshot: {
+          userTenant: user.tenantId,
+          resourceTenant: found.tenantId,
+          initiativeFolio: found.folio,
+          violationType: 'CrossTenantAccessDeniedException'
+        }
+      });
+
+      return {
+        errorCode: '403_CROSS_TENANT_VIOLATION',
+        error: `403 Forbidden (CrossTenantAccessDeniedException): Acceso denegado. El usuario '${user.email}' perteneciente a la organización '${user.tenantId}' no tiene autorización para acceder a los datos de '${found.tenantId}'.`
+      };
+    }
+
+    return { data: found };
+  }
+
+  /**
+   * Ejecuta transiciones de estado en la máquina de 12 estados de Kizukai.
+   */
+  public static transitionInitiative(
+    initiativeId: string,
+    action: string,
+    payload: {
+      user: User;
+      justification?: string;
+      mentorId?: string;
+      mentorName?: string;
+      evidenceTitle?: string;
+      evidenceType?: 'FOTO_ANTES' | 'FOTO_DESPUES' | 'MEDICION_GEMBA' | 'GRAFICA_CONTROL';
+      evidenceUrlOrText?: string;
+      checklist5s?: Gemba5SChecklist;
+      sopCode?: string;
+      sopTitle?: string;
+      weeksCount?: number;
+    }
+  ): { success: boolean; initiative?: Initiative; error?: string } {
+    const check = this.getInitiativeByIdSecure(initiativeId, payload.user);
+    if (!check.data) {
+      return { success: false, error: check.error || 'No autorizado.' };
+    }
+
+    const initiative = { ...check.data };
+    const fromState = initiative.state;
+    let toState: BusinessState = fromState;
+    const nowIso = new Date().toISOString();
+
+    switch (action) {
+      case 'ENVIAR_A_REVISION':
+        if (fromState !== 'BORRADOR') {
+          return { success: false, error: `Transición no permitida desde ${fromState}` };
+        }
+        toState = 'POR_APROBAR';
+        initiative.currentStep = 1;
+        initiative.progressPercent = 15;
+        break;
+
+      case 'APROBAR_FILTRO_TECNICO':
+        if (fromState !== 'POR_APROBAR') {
+          return { success: false, error: `Transición no permitida desde ${fromState}` };
+        }
+        toState = 'PENDIENTE_ASIGNACION_MENTOR';
+        initiative.currentStep = 2;
+        initiative.progressPercent = 25;
+        break;
+
+      case 'RECHAZAR_IDEA':
+        if (fromState !== 'POR_APROBAR') {
+          return { success: false, error: `Transición no permitida desde ${fromState}` };
+        }
+        toState = 'RECHAZADA';
+        break;
+
+      case 'ASIGNAR_MENTOR':
+        if (fromState !== 'PENDIENTE_ASIGNACION_MENTOR') {
+          return { success: false, error: `Transición no permitida desde ${fromState}` };
+        }
+        if (!payload.mentorId || !payload.mentorName) {
+          return { success: false, error: 'Debe especificar el mentor asignado.' };
+        }
+        toState = 'PENDIENTE_PLAN_IMPLEMENTACION';
+        initiative.mentorId = payload.mentorId;
+        initiative.mentorName = payload.mentorName;
+        initiative.currentStep = 3;
+        initiative.progressPercent = 35;
+        break;
+
+      case 'VALIDAR_PLAN':
+        if (fromState !== 'PENDIENTE_PLAN_IMPLEMENTACION') {
+          return { success: false, error: `Transición no permitida desde ${fromState}` };
+        }
+        // Validación de regla de ventana máxima de 8 semanas (56 días)
+        if (payload.weeksCount && payload.weeksCount > 8) {
+          return {
+            success: false,
+            error:
+              'MaxImplementationWindowExceededException: El cronograma propuesto excede la ventana máxima permitida de 8 semanas (56 días) de la metodología Kizukai Kaizen.'
+          };
+        }
+        toState = 'EN_IMPLEMENTACION';
+        initiative.currentStep = 4;
+        initiative.progressPercent = 45;
+        break;
+
+      case 'NOTIFICAR_TERMINO_OBRA':
+        if (fromState !== 'EN_IMPLEMENTACION') {
+          return { success: false, error: `Transición no permitida desde ${fromState}` };
+        }
+        // Se marcan todas las tareas como completadas
+        initiative.tasks = initiative.tasks.map((t) => ({
+          ...t,
+          completed: true,
+          completedAt: t.completedAt || nowIso.split('T')[0]
+        }));
+        toState = 'PENDIENTE_RESULTADOS';
+        initiative.currentStep = 5;
+        initiative.progressPercent = 85;
+        break;
+
+      case 'ENVIAR_A_EVALUACION':
+        if (fromState !== 'PENDIENTE_RESULTADOS') {
+          return { success: false, error: `Transición no permitida desde ${fromState}` };
+        }
+        toState = 'POR_EVALUAR';
+        initiative.currentStep = 5;
+        initiative.progressPercent = 90;
+        break;
+
+      case 'DEVOLVER_EVIDENCIA':
+        // Regla Crítica de Devolución: Exige justificación >= 20 caracteres
+        if (!payload.justification || payload.justification.trim().length < 20) {
+          return {
+            success: false,
+            error:
+              'DevolucionJustificationTooShortException: La justificación de devolución debe ser formativa y detallada, con un mínimo obligatorio de 20 caracteres explicando las deficiencias metodológicas.'
+          };
+        }
+        toState = 'DEVUELTA_PARA_AJUSTES';
+        initiative.returnTargetStateId = 'PENDIENTE_RESULTADOS';
+
+        // Congela las evidencias previas como Versión 1.0 (Devuelta)
+        initiative.evidences = initiative.evidences.map((ev) => ({
+          ...ev,
+          version: 'v1.0',
+          status: 'CONGELADA_DEVUELTA'
+        }));
+
+        // Añade feedback al hilo
+        initiative.feedbackList.push({
+          id: `fb-${Date.now()}`,
+          mentorName: payload.user.name,
+          comment: payload.justification,
+          createdAt: nowIso,
+          type: 'DEVOLUCION'
+        });
+        break;
+
+      case 'REMITIR_CORRECCION':
+        if (fromState !== 'DEVUELTA_PARA_AJUSTES') {
+          return { success: false, error: `Transición no permitida desde ${fromState}` };
+        }
+        // Crea nueva evidencia Versión 2.0 activa
+        const newEvidence: Evidence = {
+          id: `ev-v2-${Date.now()}`,
+          title: payload.evidenceTitle || 'Evidencia Corregida v2.0 - Mediciones y Fotos de Gemba',
+          type: payload.evidenceType || 'MEDICION_GEMBA',
+          version: 'v2.0',
+          status: 'ACTIVA',
+          urlOrDescription:
+            payload.evidenceUrlOrText ||
+            'Corrida estable en Gemba con mediciones de 5 días y reducción de defectos comprobada.',
+          uploadedBy: payload.user.name,
+          uploadedAt: nowIso
+        };
+        initiative.evidences.push(newEvidence);
+
+        // Restaura el estado previo exacto (por defecto PENDIENTE_RESULTADOS)
+        toState = initiative.returnTargetStateId || 'PENDIENTE_RESULTADOS';
+        initiative.returnTargetStateId = undefined;
+        break;
+
+      case 'APROBAR_EVALUACION_K3':
+        if (fromState !== 'POR_EVALUAR') {
+          return { success: false, error: `Transición no permitida desde ${fromState}` };
+        }
+        if (!payload.checklist5s || !payload.checklist5s.digitalSignature) {
+          return {
+            success: false,
+            error:
+              'GembaAuditChecklistSignatureRequiredException: Se requiere la firma digital del auditor de Gemba y la validación de Finanzas para aprobar la evaluación K3.'
+          };
+        }
+        initiative.checklist5s = payload.checklist5s;
+        toState = 'POR_DOCUMENTAR';
+        initiative.currentStep = 6;
+        initiative.progressPercent = 95;
+        break;
+
+      case 'PUBLICAR_ESTANDAR_POE':
+        if (fromState !== 'POR_DOCUMENTAR') {
+          return { success: false, error: `Transición no permitida desde ${fromState}` };
+        }
+        const sopCode = payload.sopCode || `POE-2026-${initiative.folio.split('-')[2]}`;
+        const sopTitle =
+          payload.sopTitle || `POE Estandarización Kaizen: ${initiative.title}`;
+
+        initiative.sop = {
+          id: `sop-${Date.now()}`,
+          code: sopCode,
+          title: sopTitle,
+          publishedAt: nowIso,
+          documentUrl: `https://docs.kizukai.internal/poe/${sopCode}.pdf`
+        };
+        toState = 'FINALIZADA';
+        initiative.currentStep = 6;
+        initiative.progressPercent = 100;
+        break;
+
+      case 'CANCELAR_INICIATIVA':
+        toState = 'CANCELADA';
+        break;
+
+      default:
+        return { success: false, error: `Acción desconocida: ${action}` };
+    }
+
+    initiative.state = toState;
+    initiative.updatedAt = nowIso;
+
+    // Registra la transición en la historia inmutable de la iniciativa
+    const transitionRecord: StateTransition = {
+      id: `tr-${Date.now()}`,
+      fromState,
+      toState,
+      action,
+      performedBy: payload.user.name,
+      performedRole: payload.user.role,
+      timestamp: nowIso,
+      justification: payload.justification,
+      returnTargetStateId: initiative.returnTargetStateId
+    };
+    initiative.transitionHistory.push(transitionRecord);
+
+    // Actualiza en almacenamiento
+    const all = this.getInitiativesRaw();
+    const updatedList = all.map((it) => (it.id === initiative.id ? initiative : it));
+    this.saveInitiativesRaw(updatedList);
+
+    // Registra auditoría global
+    this.logAudit({
+      entity: 'initiatives',
+      entityId: initiative.id,
+      action: `STATE_TRANSITION_${action}`,
+      performedBy: payload.user.email,
+      tenantId: initiative.tenantId,
+      payloadSnapshot: {
+        fromState,
+        toState,
+        action,
+        initiativeFolio: initiative.folio,
+        justification: payload.justification
+      }
+    });
+
+    return { success: true, initiative };
+  }
+
+  /**
+   * Crea una nueva iniciativa Kaizen K2 con verificación de Cero Inversión.
+   */
+  public static createInitiative(
+    user: User,
+    data: {
+      title: string;
+      department: string;
+      guideline: 'CALIDAD' | 'COSTO' | 'ENTREGA' | 'SEGURIDAD' | 'MORAL';
+      k0_deficient: string;
+      k1_basic_function: string;
+      k2_proactivity: string;
+      k3_expected_impact: string;
+      zero_investment_verified: boolean;
+      ve_annual_value: number;
+      asDraft: boolean;
+    }
+  ): { success: boolean; initiative?: Initiative; error?: string } {
+    if (!data.zero_investment_verified) {
+      return {
+        success: false,
+        error:
+          'ZeroInvestmentRuleViolationException: La iniciativa debe cumplir estrictamente con el principio Kaizen de CERO INVERSIÓN de capital.'
+      };
+    }
+
+    const all = this.getInitiativesRaw();
+    const nextNum = all.length + 1;
+    const folio = `KIZ-2026-${String(nextNum).padStart(4, '0')}`;
+    const nowIso = new Date().toISOString();
+
+    const initialState: BusinessState = data.asDraft ? 'BORRADOR' : 'POR_APROBAR';
+
+    // Fecha límite calculada a 8 semanas (56 días) desde hoy
+    const deadline = new Date();
+    deadline.setDate(deadline.getDate() + 56);
+
+    const newInit: Initiative = {
+      id: `init-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      folio,
+      title: data.title,
+      tenantId: user.tenantId,
+      tenantName: user.tenantName,
+      program: 'Top Companies 2026',
+      department: data.department,
+      guideline: data.guideline,
+      state: initialState,
+      currentStep: 1,
+      progressPercent: data.asDraft ? 5 : 15,
+      proponentId: user.id,
+      proponentName: user.name,
+      deadlineDate: deadline.toISOString().split('T')[0],
+      createdAt: nowIso,
+      updatedAt: nowIso,
+      isStagnant: false,
+      diagnostic: {
+        k0_deficient: data.k0_deficient,
+        k1_basic_function: data.k1_basic_function,
+        k2_proactivity: data.k2_proactivity,
+        k3_expected_impact: data.k3_expected_impact,
+        zero_investment_verified: true,
+        ve_annual_value: data.ve_annual_value || 0,
+        currency: 'USD'
+      },
+      tasks: [
+        { id: `t1-${Date.now()}`, title: 'Inspección en Gemba y medición K0', week: 1, step: 1, completed: true, completedAt: nowIso.split('T')[0] },
+        { id: `t2-${Date.now()}`, title: 'Mapeo de la función básica K1 y lluvia de ideas K2', week: 2, step: 2, completed: false },
+        { id: `t3-${Date.now()}`, title: 'Fabricación de contramedida con recursos existentes', week: 3, step: 3, completed: false },
+        { id: `t4-${Date.now()}`, title: 'Prueba piloto en Gemba y ajuste fino', week: 4, step: 4, completed: false },
+        { id: `t5-${Date.now()}`, title: 'Medición de impacto K3 y corrida de control', week: 5, step: 5, completed: false },
+        { id: `t6-${Date.now()}`, title: 'Estandarización POE y difusión en equipo', week: 6, step: 6, completed: false }
+      ],
+      evidences: [],
+      feedbackList: [],
+      transitionHistory: [
+        {
+          id: `tr-init-${Date.now()}`,
+          fromState: 'BORRADOR',
+          toState: initialState,
+          action: data.asDraft ? 'GUARDAR_BORRADOR' : 'CREAR_Y_ENVIAR_A_REVISION',
+          performedBy: user.name,
+          performedRole: user.role,
+          timestamp: nowIso,
+          justification: 'Registro inicial de iniciativa en plataforma.'
+        }
+      ]
+    };
+
+    all.unshift(newInit);
+    this.saveInitiativesRaw(all);
+
+    this.logAudit({
+      entity: 'initiatives',
+      entityId: newInit.id,
+      action: 'INITIATIVE_CREATED',
+      performedBy: user.email,
+      tenantId: user.tenantId,
+      payloadSnapshot: {
+        folio: newInit.folio,
+        title: newInit.title,
+        state: newInit.state,
+        guideline: newInit.guideline,
+        veAnnualValue: newInit.diagnostic.ve_annual_value
+      }
+    });
+
+    return { success: true, initiative: newInit };
+  }
+
+  /**
+   * Genera el contenido CSV exportable de los reportes prioritarios con metadatos de auditoría obligatorios.
+   */
+  public static generateReportCSV(
+    reportType: 'A' | 'B' | 'C',
+    user: User,
+    initiatives: Initiative[]
+  ): string {
+    const timestamp = new Date().toISOString();
+    const orgScope = user.role === 'CONSULTANT' ? 'TODAS_LAS_ORGANIZACIONES (CONSOLIDADO)' : user.tenantId;
+
+    let title = '';
+    let headers: string[] = [];
+    const rows: string[][] = [];
+
+    if (reportType === 'A') {
+      title = 'Reporte A - Eficiencia del Embudo por Cohorte y Tasa de Conversión';
+      headers = ['Folio', 'Título', 'Organización', 'Departamento', 'Directriz', 'Estado Actual', 'Paso Metodológico', 'Avance %', 'Mentor Asignado'];
+      initiatives.forEach((i) => {
+        rows.push([
+          i.folio,
+          `"${i.title.replace(/"/g, '""')}"`,
+          i.tenantName,
+          i.department,
+          i.guideline,
+          i.state,
+          `Paso ${i.currentStep}`,
+          `${i.progressPercent}%`,
+          i.mentorName || 'Sin asignar'
+        ]);
+      });
+    } else if (reportType === 'B') {
+      title = 'Reporte B - Tiempos de Ciclo, Ventana de 8 Semanas y Estancamiento';
+      headers = ['Folio', 'Título', 'Organización', 'Fecha Registro', 'Fecha Límite (8 Semanas)', 'Estado', 'Alerta Estancamiento (>7 Días)', 'Días Transcurridos'];
+      initiatives.forEach((i) => {
+        const createdDate = new Date(i.createdAt);
+        const diffDays = Math.floor((Date.now() - createdDate.getTime()) / (1000 * 3600 * 24));
+        rows.push([
+          i.folio,
+          `"${i.title.replace(/"/g, '""')}"`,
+          i.tenantName,
+          i.createdAt.split('T')[0],
+          i.deadlineDate,
+          i.state,
+          i.isStagnant ? 'SI (ESTANCADA)' : 'NO (EN FLUJO)',
+          `${diffDays} días`
+        ]);
+      });
+    } else {
+      title = 'Reporte C - Impacto Económico Acumulado K3 vs Inversión Cero';
+      headers = ['Folio', 'Título', 'Organización', 'Directriz QCDSM', 'Ahorro Anual Estimado (V_E USD)', 'Inversión Real', 'ROI Kaizen', 'Estado'];
+      initiatives.forEach((i) => {
+        rows.push([
+          i.folio,
+          `"${i.title.replace(/"/g, '""')}"`,
+          i.tenantName,
+          i.guideline,
+          `$${i.diagnostic.ve_annual_value.toLocaleString()} USD`,
+          '$0 USD (Cero Inversión)',
+          'Infinito (Puro Ingenio)',
+          i.state
+        ]);
+      });
+    }
+
+    // Cabecera de Auditoría Obligatoria (PRD)
+    const auditHeader = [
+      `# ==============================================================================`,
+      `# KIZUKAI PROJECT HUB - EXPORTACIÓN OFICIAL DE REPORTE PRIORITARIO`,
+      `# Reporte: ${title}`,
+      `# Fecha y Hora UTC: ${timestamp}`,
+      `# Usuario Solicitante: ${user.name} (${user.email}) - Rol: ${user.role}`,
+      `# Organización / Tenant Filtrado: ${orgScope}`,
+      `# Total de Registros: ${rows.length}`,
+      `# Metodología: Kizukai Kaizen (Cero Inversión de Capital)`,
+      `# ==============================================================================`,
+      ''
+    ].join('\n');
+
+    const csvData = [
+      headers.join(','),
+      ...rows.map((r) => r.join(','))
+    ].join('\n');
+
+    return `\uFEFF${auditHeader}${csvData}`;
+  }
+
+  /**
+   * Dispara la descarga del archivo en el navegador.
+   */
+  public static triggerDownload(content: string, filename: string, mimeType: string): void {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  public static getDatabaseEntitiesSummary() {
+    return DATABASE_ENTITIES;
+  }
+}
