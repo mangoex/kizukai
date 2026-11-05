@@ -1,5 +1,6 @@
 import React from 'react';
 import { BusinessState, StrategicGuideline, TenantId, User } from '../types/index.ts';
+import { StorageService } from '../services/storageService.ts';
 
 export interface FilterState {
   searchQuery: string;
@@ -195,11 +196,11 @@ export const InitiativeFilters: React.FC<InitiativeFiltersProps> = ({
             className="kiz-select"
           >
             <option value="ALL">Todas las Directrices</option>
-            <option value="CALIDAD">Calidad (Q)</option>
-            <option value="COSTO">Costo (C)</option>
-            <option value="ENTREGA">Entrega (D)</option>
-            <option value="SEGURIDAD">Seguridad (S)</option>
-            <option value="MORAL">Moral (M)</option>
+            {StorageService.getGuidelines().map((g: any) => (
+              <option key={g.code} value={g.code}>
+                {g.name} ({g.letter})
+              </option>
+            ))}
           </select>
         </div>
 

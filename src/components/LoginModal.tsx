@@ -27,9 +27,32 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     e.preventDefault();
     setErrorMessage('');
 
+    const cleanEmail = email.trim().toLowerCase();
+
+    // Verificación especial para cuenta de Super Admin
+    if (cleanEmail === 'mangoex@gmail.com') {
+      if (password === '531698Pa' || password === 'kizukai2026') {
+        const superAdminUser = DEMO_USERS.super_admin;
+        StorageService.logAudit({
+          entity: 'users',
+          entityId: superAdminUser.id,
+          action: 'SUPER_ADMIN_LOGIN_SUCCESS',
+          performedBy: superAdminUser.email,
+          tenantId: superAdminUser.tenantId,
+          payloadSnapshot: { method: 'SUPER_ADMIN_PASSWORD', role: superAdminUser.role }
+        });
+        onLoginSuccess(superAdminUser);
+        onClose();
+        return;
+      } else {
+        setErrorMessage('Contraseña incorrecta para la cuenta Super Admin.');
+        return;
+      }
+    }
+
     // Busca usuario demo por email
     const foundProfile = DEMO_PROFILES.find(
-      (p) => p.user.email.toLowerCase() === email.trim().toLowerCase()
+      (p) => p.user.email.toLowerCase() === cleanEmail
     );
 
     if (!foundProfile) {

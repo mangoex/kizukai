@@ -20,6 +20,7 @@ const STORAGE_KEYS = {
   CURRENT_USER: 'kizukai_hub_active_user_v1',
   ORGANIZATIONS: 'kizukai_hub_organizations_v1',
   DEPARTMENTS: 'kizukai_hub_departments_v1',
+  GUIDELINES: 'kizukai_hub_guidelines_v1',
   USERS: 'kizukai_hub_users_v1'
 };
 
@@ -753,10 +754,81 @@ export class StorageService {
     return { success: true, department: newDept };
   }
 
+  public static getGuidelines(): any[] {
+    const raw = localStorage.getItem(STORAGE_KEYS.GUIDELINES);
+    if (!raw) {
+      const initialGuidelines = [
+        { code: 'CALIDAD', letter: 'Q', name: 'Calidad (Quality)', description: 'Cero defectos, reducción de scrap y control de variabilidad en Gemba.' },
+        { code: 'COSTO', letter: 'C', name: 'Costo (Cost)', description: 'Ahorro de recursos, energía y materiales con CERO INVERSIÓN de capital ($0 Capex).' },
+        { code: 'ENTREGA', letter: 'D', name: 'Entrega (Delivery)', description: 'Reducción de tiempos de ciclo, cambios rápidos de formato (SMED) y flujo continuo.' },
+        { code: 'SEGURIDAD', letter: 'S', name: 'Seguridad (Safety)', description: 'Ergonomía en estaciones de trabajo, eliminación de condiciones inseguras y cero accidentes.' },
+        { code: 'MORAL', letter: 'M', name: 'Moral (Morale / 5S)', description: 'Ambiente laboral digno, orden visual, estandarización y cultura de autodisciplina 5S.' }
+      ];
+      localStorage.setItem(STORAGE_KEYS.GUIDELINES, JSON.stringify(initialGuidelines));
+      return initialGuidelines;
+    }
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return [];
+    }
+  }
+
+  public static createGuideline(
+    actor: User,
+    data: { code: string; letter: string; name: string; description: string }
+  ): { success: boolean; guideline?: any; error?: string } {
+    if (actor.role !== 'TECH_ADMIN' && actor.role !== 'CONSULTANT') {
+      return { success: false, error: '403 Forbidden: Solo el Administrador Técnico o Consultor pueden agregar directrices estratégicas.' };
+    }
+
+    if (!data.code || !data.name) {
+      return { success: false, error: 'El código y nombre de la directriz son obligatorios.' };
+    }
+
+    const list = this.getGuidelines();
+    const upperCode = data.code.trim().toUpperCase();
+    if (list.some((g: any) => g.code === upperCode)) {
+      return { success: false, error: `Ya existe una directriz con el código ${upperCode}.` };
+    }
+
+    const newGuideline = {
+      code: upperCode,
+      letter: data.letter.trim().toUpperCase() || upperCode[0],
+      name: data.name.trim(),
+      description: data.description?.trim() || ''
+    };
+
+    list.push(newGuideline);
+    localStorage.setItem(STORAGE_KEYS.GUIDELINES, JSON.stringify(list));
+
+    this.logAudit({
+      entity: 'catalogs',
+      entityId: upperCode,
+      action: 'STRATEGIC_GUIDELINE_CREATED',
+      performedBy: actor.email,
+      tenantId: 'ORG-GLOBAL',
+      payloadSnapshot: newGuideline
+    });
+
+    return { success: true, guideline: newGuideline };
+  }
+
   public static getUsers(): User[] {
     const raw = localStorage.getItem(STORAGE_KEYS.USERS);
     if (!raw) {
       const initialUsers: User[] = [
+        {
+          id: 'usr-000-mangoex',
+          name: 'Super Admin (Mangoex)',
+          email: 'mangoex@gmail.com',
+          role: 'TECH_ADMIN',
+          tenantId: 'ORG-GLOBAL',
+          tenantName: 'Kizukai Platform Infrastructure (Root)',
+          department: 'Super Administrador / Dirección',
+          requiresMfa: false,
+          avatarInitials: 'SA'
+        },
         {
           id: 'usr-001-juan',
           name: 'Juan Pérez',

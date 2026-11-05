@@ -8,12 +8,13 @@ interface AdminManagementModuleProps {
 }
 
 export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ currentUser }) => {
-  const [activeTab, setActiveTab] = useState<'users' | 'organizations' | 'catalogs'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'organizations' | 'catalogs' | 'guidelines'>('users');
 
   // Estados de datos
   const [usersList, setUsersList] = useState<User[]>([]);
   const [orgsList, setOrgsList] = useState<any[]>([]);
   const [deptsList, setDeptsList] = useState<any[]>([]);
+  const [guidelinesList, setGuidelinesList] = useState<any[]>([]);
 
   // Estados de feedback
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -38,10 +39,17 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
   const [newDeptBranch, setNewDeptBranch] = useState('Planta Principal');
   const [newDeptOrg, setNewDeptOrg] = useState(currentUser.tenantId);
 
+  // 4. Directriz Estratégica
+  const [newGuidelineCode, setNewGuidelineCode] = useState('');
+  const [newGuidelineLetter, setNewGuidelineLetter] = useState('');
+  const [newGuidelineName, setNewGuidelineName] = useState('');
+  const [newGuidelineDesc, setNewGuidelineDesc] = useState('');
+
   const loadData = () => {
     setUsersList(StorageService.getUsers());
     setOrgsList(StorageService.getOrganizations());
     setDeptsList(StorageService.getDepartments());
+    setGuidelinesList(StorageService.getGuidelines());
   };
 
   useEffect(() => {
@@ -140,6 +148,31 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
     }
   };
 
+  const handleCreateGuideline = (e: React.FormEvent) => {
+    e.preventDefault();
+    clearAlerts();
+
+    const res = StorageService.createGuideline(currentUser, {
+      code: newGuidelineCode,
+      letter: newGuidelineLetter,
+      name: newGuidelineName,
+      description: newGuidelineDesc
+    });
+
+    if (res.success && res.guideline) {
+      setSuccessMsg(`✓ Directriz '${res.guideline.name}' (${res.guideline.code}) registrada exitosamente.`);
+      setNewGuidelineCode('');
+      setNewGuidelineLetter('');
+      setNewGuidelineName('');
+      setNewGuidelineDesc('');
+      loadData();
+    } else {
+      setErrorMsg(res.error || 'Error al registrar la directriz.');
+    }
+  };
+
+  const canManageGuidelines = currentUser.role === 'TECH_ADMIN' || currentUser.role === 'CONSULTANT';
+
   // Filtrado de usuarios según permisos de visualización
   const visibleUsers = usersList.filter((u) => {
     if (currentUser.role === 'TECH_ADMIN' || currentUser.role === 'CONSULTANT') return true;
@@ -212,7 +245,19 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
               border: '1px solid var(--kiz-border)'
             }}
           >
-            🗂️ Catálogos de Áreas ({deptsList.length})
+            🗂️ Departamentos ({deptsList.length})
+          </button>
+
+          <button
+            onClick={() => { setActiveTab('guidelines'); clearAlerts(); }}
+            className="kiz-btn kiz-btn-sm"
+            style={{
+              backgroundColor: activeTab === 'guidelines' ? 'var(--kiz-primary)' : 'var(--kiz-surface-subtle)',
+              color: activeTab === 'guidelines' ? '#ffffff' : 'var(--kiz-text)',
+              border: '1px solid var(--kiz-border)'
+            }}
+          >
+            🎯 Directrices QCDSM ({guidelinesList.length})
           </button>
         </div>
       </div>
@@ -580,6 +625,123 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
                   <span style={{ fontSize: '0.65rem', fontFamily: 'var(--kiz-font-mono)', color: 'var(--kiz-text-muted)' }}>
                     {d.id}
                   </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 4: CATÁLOGO DE DIRECTRICES ESTRATÉGICAS (QCDSM) */}
+      {activeTab === 'guidelines' && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '1.25rem' }}>
+          {canManageGuidelines && (
+            <div className="kiz-card" style={{ height: 'fit-content' }}>
+              <h2 style={{ fontSize: '1.05rem', color: 'var(--kiz-primary)', marginBottom: '0.4rem' }}>
+                + Agregar Directriz Estratégica
+              </h2>
+              <p style={{ fontSize: '0.75rem', color: 'var(--kiz-text-muted)', marginBottom: '1rem' }}>
+                Directrices corporativas para clasificar iniciativas Kaizen K0-K3.
+              </p>
+              <form onSubmit={handleCreateGuideline} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.5rem' }}>
+                  <div>
+                    <label className="kiz-label">Código *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ej. MEDIO_AMBIENTE"
+                      value={newGuidelineCode}
+                      onChange={(e) => setNewGuidelineCode(e.target.value)}
+                      className="kiz-input"
+                      style={{ textTransform: 'uppercase' }}
+                    />
+                  </div>
+                  <div>
+                    <label className="kiz-label">Letra / Sigla *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ej. E (Environment)"
+                      value={newGuidelineLetter}
+                      onChange={(e) => setNewGuidelineLetter(e.target.value)}
+                      className="kiz-input"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="kiz-label">Nombre Descriptivo *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ej. Sustentabilidad y Medio Ambiente"
+                    value={newGuidelineName}
+                    onChange={(e) => setNewGuidelineName(e.target.value)}
+                    className="kiz-input"
+                  />
+                </div>
+
+                <div>
+                  <label className="kiz-label">Descripción Operativa</label>
+                  <textarea
+                    rows={2}
+                    placeholder="Enfoque de reducción de huella de carbono, reciclaje y cero desperdicio..."
+                    value={newGuidelineDesc}
+                    onChange={(e) => setNewGuidelineDesc(e.target.value)}
+                    className="kiz-textarea"
+                  />
+                </div>
+
+                <button type="submit" className="kiz-btn kiz-btn-accent" style={{ marginTop: '0.5rem', fontWeight: 700 }}>
+                  🎯 Guardar Directriz Estratégica
+                </button>
+              </form>
+            </div>
+          )}
+
+          <div className="kiz-card">
+            <h2 style={{ fontSize: '1.05rem', color: 'var(--kiz-primary)', marginBottom: '0.5rem' }}>
+              Catálogo de Directrices Estratégicas ({guidelinesList.length})
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+              {guidelinesList.map((g) => (
+                <div
+                  key={g.code}
+                  style={{
+                    padding: '0.85rem',
+                    borderRadius: 'var(--kiz-radius)',
+                    border: '1px solid var(--kiz-border)',
+                    backgroundColor: 'var(--kiz-surface-subtle)'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                      <span style={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: '50%',
+                        backgroundColor: 'var(--kiz-primary)',
+                        color: '#ffffff',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.75rem',
+                        fontWeight: 800
+                      }}>
+                        {g.letter}
+                      </span>
+                      <strong style={{ fontSize: '0.88rem', color: 'var(--kiz-text)' }}>{g.name}</strong>
+                    </div>
+                    <span style={{ fontSize: '0.68rem', fontFamily: 'var(--kiz-font-mono)', backgroundColor: 'var(--kiz-surface-muted)', padding: '0.15rem 0.45rem', borderRadius: 4, fontWeight: 700, color: 'var(--kiz-primary)' }}>
+                      {g.code}
+                    </span>
+                  </div>
+                  {g.description && (
+                    <p style={{ fontSize: '0.74rem', color: 'var(--kiz-text-muted)', marginTop: '0.35rem' }}>
+                      {g.description}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>

@@ -73,6 +73,17 @@ export const DEMO_USERS: Record<string, User> = {
     requiresMfa: false,
     avatarInitials: 'LG'
   },
+  super_admin: {
+    id: 'usr-000-mangoex',
+    name: 'Super Admin',
+    email: 'mangoex@gmail.com',
+    role: 'TECH_ADMIN',
+    tenantId: 'ORG-A',
+    tenantName: 'Kizukai Platform Infrastructure (Root)',
+    department: 'Super Administrador / Dirección',
+    requiresMfa: false,
+    avatarInitials: 'SA'
+  },
   admin_tech: {
     id: 'usr-007-admin',
     name: 'David Villarreal (SysAdmin)',
@@ -87,6 +98,12 @@ export const DEMO_USERS: Record<string, User> = {
 };
 
 export const DEMO_PROFILES: DemoProfile[] = [
+  {
+    user: DEMO_USERS.super_admin,
+    description: 'Super Administrador | Control total de empresas, consultores y catálogos',
+    requiresMfa: false,
+    tag: 'Super Admin (mangoex@gmail.com)'
+  },
   {
     user: DEMO_USERS.juan_perez,
     description: 'Participante (Colaborador) | Operador de planta en Gemba',
