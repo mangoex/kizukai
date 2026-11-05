@@ -168,6 +168,34 @@ export const Navbar: React.FC<NavbarProps> = ({
           <span style={{ color: '#cbd5e1' }}>Norma: <strong>Cero Inversión / Gemba Kaizen</strong></span>
           <span style={{ color: '#64748b' }}>|</span>
           <span style={{ color: '#cbd5e1' }}>Ventana Máx: <strong>8 Semanas (56 Días)</strong></span>
+          {currentUser && onOpenProfileModal && (
+            <>
+              <span style={{ color: '#64748b' }}>|</span>
+              <button
+                type="button"
+                onClick={onOpenProfileModal}
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.12)',
+                  border: '1px solid rgba(255,255,255,0.3)',
+                  color: '#ffffff',
+                  borderRadius: '12px',
+                  padding: '0.15rem 0.6rem',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  transition: 'background 0.15s ease'
+                }}
+                title="Editar fotografía y datos de mi perfil personal"
+                aria-label="Editar mi perfil personal"
+              >
+                <span>⚙️ Mi Perfil:</span>
+                <span style={{ textDecoration: 'underline' }}>{currentUser.name}</span>
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -283,11 +311,31 @@ export const Navbar: React.FC<NavbarProps> = ({
                 👥 Usuarios & Áreas
               </button>
             )}
+
+            {onOpenProfileModal && (
+              <button
+                type="button"
+                onClick={onOpenProfileModal}
+                className="kiz-btn kiz-btn-sm"
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.08)',
+                  color: '#ffffff',
+                  border: '1px solid rgba(255,255,255,0.35)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  fontWeight: 600
+                }}
+                title="Editar mis datos y fotografía de perfil"
+              >
+                <span>👤</span> Mi Perfil
+              </button>
+            )}
           </nav>
         )}
 
         {/* Acciones de Usuario / Perfiles */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           {currentUser ? (
             <>
               {currentUser.role !== 'TECH_ADMIN' && (
@@ -298,6 +346,56 @@ export const Navbar: React.FC<NavbarProps> = ({
                   style={{ fontWeight: 700 }}
                 >
                   <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>+</span> Registrar K2
+                </button>
+              )}
+
+              {/* Botón Prominente Directo de Mi Perfil y Foto en Desktop */}
+              {onOpenProfileModal && (
+                <button
+                  type="button"
+                  onClick={onOpenProfileModal}
+                  className="kiz-btn kiz-btn-sm"
+                  style={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+                    color: '#ffffff',
+                    border: '1.5px solid rgba(255, 255, 255, 0.45)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.45rem',
+                    padding: '0.35rem 0.75rem',
+                    borderRadius: 'var(--kiz-radius)',
+                    fontWeight: 700,
+                    fontSize: '0.78rem',
+                    cursor: 'pointer',
+                    boxShadow: 'var(--kiz-shadow-sm)',
+                    transition: 'all 0.15s ease'
+                  }}
+                  title="Editar mis datos y fotografía de perfil"
+                  aria-label="Editar mi perfil y fotografía"
+                >
+                  <div style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: '50%',
+                    backgroundColor: 'var(--kiz-accent)',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '0.65rem',
+                    fontWeight: 800,
+                    overflow: 'hidden',
+                    flexShrink: 0,
+                    border: '1.5px solid #ffffff'
+                  }}>
+                    {currentUser.avatarUrl ? (
+                      <img src={currentUser.avatarUrl} alt={currentUser.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      currentUser.avatarInitials
+                    )}
+                  </div>
+                  <span>Mi Perfil & Foto</span>
+                  <span style={{ fontSize: '0.8rem' }}>⚙️</span>
                 </button>
               )}
 
@@ -363,9 +461,73 @@ export const Navbar: React.FC<NavbarProps> = ({
                     }}
                     role="menu"
                   >
+                    {/* Tarjeta Destacada de Usuario Activo con Acceso a Perfil */}
                     <div style={{
-                      padding: '0.5rem 0.75rem',
-                      fontSize: '0.75rem',
+                      backgroundColor: 'var(--kiz-surface-subtle)',
+                      border: '1px solid var(--kiz-border)',
+                      borderRadius: 'var(--kiz-radius)',
+                      padding: '0.65rem 0.75rem',
+                      marginBottom: '0.5rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '0.5rem'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', minWidth: 0 }}>
+                        <div style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: '50%',
+                          backgroundColor: 'var(--kiz-primary)',
+                          color: '#ffffff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontWeight: 800,
+                          fontSize: '0.75rem',
+                          overflow: 'hidden',
+                          flexShrink: 0,
+                          border: '1.5px solid var(--kiz-accent)'
+                        }}>
+                          {currentUser.avatarUrl ? (
+                            <img src={currentUser.avatarUrl} alt={currentUser.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : (
+                            currentUser.avatarInitials
+                          )}
+                        </div>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--kiz-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {currentUser.name}
+                          </div>
+                          <div style={{ fontSize: '0.68rem', color: 'var(--kiz-text-subtle)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            🏢 {currentUser.tenantName}
+                          </div>
+                        </div>
+                      </div>
+
+                      {onOpenProfileModal && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowProfileSwitcher(false);
+                            onOpenProfileModal();
+                          }}
+                          className="kiz-btn kiz-btn-accent kiz-btn-sm"
+                          style={{
+                            fontSize: '0.72rem',
+                            padding: '0.25rem 0.6rem',
+                            fontWeight: 700,
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          ✏️ Editar Perfil
+                        </button>
+                      )}
+                    </div>
+
+                    <div style={{
+                      padding: '0.4rem 0.75rem',
+                      fontSize: '0.72rem',
                       fontWeight: 700,
                       color: 'var(--kiz-text-muted)',
                       borderBottom: '1px solid var(--kiz-border-subtle)',

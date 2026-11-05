@@ -344,6 +344,7 @@ export const App: React.FC = () => {
             {activeView === 'admin' && (
               <AdminManagementModule
                 currentUser={currentUser}
+                onOpenProfileModal={() => setIsProfileModalOpen(true)}
               />
             )}
           </>

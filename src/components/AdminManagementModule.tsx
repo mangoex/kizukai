@@ -5,9 +5,10 @@ import { AdminEngine, UserRole } from '../domain/adminEngine.ts';
 
 interface AdminManagementModuleProps {
   currentUser: User;
+  onOpenProfileModal?: () => void;
 }
 
-export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ currentUser }) => {
+export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ currentUser, onOpenProfileModal }) => {
   const [activeTab, setActiveTab] = useState<'users' | 'organizations' | 'catalogs' | 'guidelines'>('users');
 
   // Estados de datos
@@ -397,40 +398,84 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
               Directorio de Usuarios ({visibleUsers.length})
             </h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '550px', overflowY: 'auto' }}>
-              {visibleUsers.map((u) => (
-                <div
-                  key={u.id}
-                  style={{
-                    padding: '0.75rem',
-                    borderRadius: 'var(--kiz-radius)',
-                    border: '1px solid var(--kiz-border-subtle)',
-                    backgroundColor: 'var(--kiz-surface-subtle)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '0.5rem'
-                  }}
-                >
-                  <div>
+              {visibleUsers.map((u) => {
+                const isCurrent = u.id === currentUser.id;
+                return (
+                  <div
+                    key={u.id}
+                    style={{
+                      padding: '0.75rem',
+                      borderRadius: 'var(--kiz-radius)',
+                      border: isCurrent ? '1.5px solid var(--kiz-accent)' : '1px solid var(--kiz-border-subtle)',
+                      backgroundColor: isCurrent ? '#fef2f2' : 'var(--kiz-surface-subtle)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '0.5rem'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                      <div style={{
+                        width: 34,
+                        height: 34,
+                        borderRadius: '50%',
+                        backgroundColor: 'var(--kiz-primary)',
+                        color: '#ffffff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 800,
+                        fontSize: '0.75rem',
+                        overflow: 'hidden',
+                        flexShrink: 0,
+                        border: isCurrent ? '2px solid var(--kiz-accent)' : '1px solid var(--kiz-border)'
+                      }}>
+                        {u.avatarUrl ? (
+                          <img src={u.avatarUrl} alt={u.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          u.avatarInitials
+                        )}
+                      </div>
+
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                          <strong style={{ fontSize: '0.85rem' }}>{u.name}</strong>
+                          {isCurrent && (
+                            <span style={{ fontSize: '0.62rem', backgroundColor: 'var(--kiz-accent)', color: '#ffffff', padding: '0.1rem 0.35rem', borderRadius: 4, fontWeight: 700 }}>
+                              Tú
+                            </span>
+                          )}
+                          <span className={`role-badge role-${u.role}`} style={{ fontSize: '0.65rem' }}>
+                            {u.role}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--kiz-text-muted)', marginTop: '0.15rem' }}>
+                          📧 {u.email}
+                        </div>
+                        <div style={{ fontSize: '0.68rem', color: 'var(--kiz-text-subtle)' }}>
+                          🏢 {u.tenantName} &middot; 📍 {u.department || 'General'}
+                        </div>
+                      </div>
+                    </div>
+
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <strong style={{ fontSize: '0.85rem' }}>{u.name}</strong>
-                      <span className={`role-badge role-${u.role}`} style={{ fontSize: '0.65rem' }}>
-                        {u.role}
+                      {isCurrent && onOpenProfileModal && (
+                        <button
+                          type="button"
+                          onClick={onOpenProfileModal}
+                          className="kiz-btn kiz-btn-outline kiz-btn-sm"
+                          style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', fontWeight: 700 }}
+                        >
+                          ✏️ Editar Mi Foto
+                        </button>
+                      )}
+                      <span style={{ fontSize: '0.65rem', padding: '0.15rem 0.4rem', borderRadius: 4, backgroundColor: u.requiresMfa ? '#ecfdf5' : '#f1f5f9', color: u.requiresMfa ? '#065f46' : '#64748b', fontWeight: 600 }}>
+                        {u.requiresMfa ? 'MFA Activo' : 'Básico'}
                       </span>
                     </div>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--kiz-text-muted)', marginTop: '0.15rem' }}>
-                      📧 {u.email}
-                    </div>
-                    <div style={{ fontSize: '0.68rem', color: 'var(--kiz-text-subtle)' }}>
-                      🏢 {u.tenantName} &middot; 📍 {u.department || 'General'}
-                    </div>
                   </div>
-
-                  <span style={{ fontSize: '0.65rem', padding: '0.15rem 0.4rem', borderRadius: 4, backgroundColor: u.requiresMfa ? '#ecfdf5' : '#f1f5f9', color: u.requiresMfa ? '#065f46' : '#64748b', fontWeight: 600 }}>
-                    {u.requiresMfa ? 'MFA Activo' : 'Básico'}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
