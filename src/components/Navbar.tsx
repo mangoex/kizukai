@@ -10,6 +10,7 @@ interface NavbarProps {
   onOpenLoginModal: () => void;
   onSwitchUser: (user: User) => void;
   onLogout: () => void;
+  onOpenRoleSheet?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -19,7 +20,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenNewModal,
   onOpenLoginModal,
   onSwitchUser,
-  onLogout
+  onLogout,
+  onOpenRoleSheet
 }) => {
   const [showProfileSwitcher, setShowProfileSwitcher] = useState(false);
 
@@ -44,12 +46,63 @@ export const Navbar: React.FC<NavbarProps> = ({
       zIndex: 100,
       boxShadow: 'var(--kiz-shadow-md)'
     }}>
-      {/* Barra superior de gobernanza y Tenant */}
-      <div style={{
-        backgroundColor: '#101e2e',
-        padding: '0.35rem 1.25rem',
-        fontSize: '0.75rem',
-        display: 'flex',
+      {/* 1. Mobile Topbar Compacta (56px) - Solo visible en viewport < 768px */}
+      <div className="kiz-mobile-topbar" aria-label="Cabecera móvil compacta">
+        <div className="kiz-mobile-topbar-brand">
+          <div style={{
+            width: 32,
+            height: 32,
+            borderRadius: 'var(--kiz-radius-xs)',
+            backgroundColor: '#ffffff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: 'var(--kiz-shadow-sm)'
+          }}>
+            <svg width="20" height="20" viewBox="0 0 100 100" fill="none">
+              <rect width="100" height="100" rx="20" fill="#1a2d42"/>
+              <path d="M25 75 L50 25 L75 75 Z" stroke="#c44536" strokeWidth="9" fill="none"/>
+              <circle cx="50" cy="55" r="14" fill="#e0a96d"/>
+              <circle cx="50" cy="55" r="6" fill="#1a2d42"/>
+            </svg>
+          </div>
+          <span style={{ fontSize: '1.05rem', fontWeight: 800, letterSpacing: '-0.02em', color: '#ffffff' }}>
+            KIZUKAI <span style={{ color: 'var(--kiz-accent-light)', fontSize: '0.85rem' }}>K2</span>
+          </span>
+        </div>
+
+        {currentUser ? (
+          <button
+            type="button"
+            onClick={onOpenRoleSheet || (() => setShowProfileSwitcher(true))}
+            className="kiz-mobile-role-pill"
+            aria-label={`Cambiar rol. Rol actual: ${currentUser.role}`}
+          >
+            <span>👤</span>
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {currentUser.name.split(' ')[0]} ({currentUser.tenantId})
+            </span>
+            <span style={{ fontSize: '0.65rem', opacity: 0.8 }}>▾</span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onOpenLoginModal}
+            className="kiz-btn kiz-btn-accent kiz-btn-sm"
+            style={{ minHeight: 36, padding: '0.2rem 0.6rem', fontSize: '0.75rem' }}
+          >
+            Ingresar
+          </button>
+        )}
+      </div>
+
+      {/* 2. Barra Superior Desktop de Gobernanza y Tenant (Oculta en Móvil) */}
+      <div className="kiz-hide-on-mobile">
+        <div style={{
+          backgroundColor: '#101e2e',
+          padding: '0.35rem 1.25rem',
+          fontSize: '0.75rem',
+          display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         borderBottom: '1px solid rgba(255,255,255,0.08)'
@@ -375,6 +428,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           )}
         </div>
       </div>
+      </div>
     </header>
   );
 };
+

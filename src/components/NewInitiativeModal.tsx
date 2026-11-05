@@ -211,7 +211,7 @@ export const NewInitiativeModal: React.FC<NewInitiativeModalProps> = ({
                 </span>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
                 <div>
                   <label htmlFor="init-dept" className="kiz-label">
                     Departamento de Gemba *
@@ -312,7 +312,7 @@ export const NewInitiativeModal: React.FC<NewInitiativeModalProps> = ({
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                 <div>
                   <label htmlFor="k3-input" className="kiz-label">
                     K3: Impacto Esperado (Resultados medibles proyectados) *
@@ -422,7 +422,7 @@ export const NewInitiativeModal: React.FC<NewInitiativeModalProps> = ({
               Continuar →
             </button>
           ) : (
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               <button
                 type="button"
                 onClick={() => handleSave(true)}

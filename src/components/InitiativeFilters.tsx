@@ -27,6 +27,14 @@ export const InitiativeFilters: React.FC<InitiativeFiltersProps> = ({
   totalResults
 }) => {
   const isConsultant = currentUser.role === 'CONSULTANT';
+  const [showMobileFilters, setShowMobileFilters] = React.useState(false);
+
+  const activeFiltersCount =
+    (filters.state !== 'ALL' ? 1 : 0) +
+    (filters.step !== 'ALL' ? 1 : 0) +
+    (filters.guideline !== 'ALL' ? 1 : 0) +
+    (filters.department !== 'ALL' ? 1 : 0) +
+    (filters.tenantFilter !== 'ALL' ? 1 : 0);
 
   const handleChange = (field: keyof FilterState, value: any) => {
     onFilterChange({
@@ -60,7 +68,7 @@ export const InitiativeFilters: React.FC<InitiativeFiltersProps> = ({
         marginBottom: '0.85rem',
         flexWrap: 'wrap'
       }}>
-        <div style={{ flex: 1, minWidth: 260 }}>
+        <div style={{ flex: 1, minWidth: 'min(100%, 240px)' }}>
           <label htmlFor="search-input" className="kiz-label">
             Buscar por Folio, Título, Proponente o Palabras Clave
           </label>
@@ -102,26 +110,38 @@ export const InitiativeFilters: React.FC<InitiativeFiltersProps> = ({
           </select>
         </div>
 
-        {/* Botón Restablecer */}
-        <div style={{ alignSelf: 'flex-end' }}>
+        {/* Botones de Filtros y Restablecer */}
+        <div style={{ display: 'flex', gap: '0.5rem', alignSelf: 'flex-end', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={() => setShowMobileFilters(!showMobileFilters)}
+            className="kiz-btn kiz-btn-secondary kiz-show-on-mobile"
+            title="Mostrar u ocultar filtros secundarios en móvil"
+            aria-expanded={showMobileFilters}
+          >
+            ⚡ Filtros {activeFiltersCount > 0 ? `(${activeFiltersCount})` : ''} {showMobileFilters ? '▲' : '▼'}
+          </button>
+
           <button
             onClick={onResetFilters}
             className="kiz-btn kiz-btn-secondary"
             title="Restablecer todos los filtros a sus valores predeterminados"
           >
-            ↺ Restablecer Filtros
+            ↺ Restablecer
           </button>
         </div>
       </div>
 
       {/* Filtros Combinables Secundarios */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-        gap: '0.75rem',
-        paddingTop: '0.75rem',
-        borderTop: '1px solid var(--kiz-border-subtle)'
-      }}>
+      <div
+        className={`kiz-filter-grid ${showMobileFilters ? 'open' : ''}`}
+        style={{
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: '0.75rem',
+          paddingTop: '0.75rem',
+          borderTop: '1px solid var(--kiz-border-subtle)'
+        }}
+      >
         {/* Estado (12 Estados) */}
         <div>
           <label htmlFor="state-filter" className="kiz-label">

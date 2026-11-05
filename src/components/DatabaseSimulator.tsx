@@ -7,10 +7,11 @@ interface DatabaseSimulatorProps {
 }
 
 export const DatabaseSimulator: React.FC<DatabaseSimulatorProps> = ({
-  currentUser
+  currentUser: _currentUser
 }) => {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(StorageService.getAuditLogs());
   const [selectedEntity, setSelectedEntity] = useState<string>('initiatives');
+  const [activeMobileView, setActiveMobileView] = useState<'ENTITIES' | 'AUDIT_LOGS'>('ENTITIES');
   const [securityTestResult, setSecurityTestResult] = useState<{
     status: 'IDLE' | 'SUCCESS' | 'BLOCKED_403';
     message: string;
@@ -108,10 +109,10 @@ export const DatabaseSimulator: React.FC<DatabaseSimulatorProps> = ({
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.35rem' }}>
           <span style={{ fontSize: '1.5rem' }}>🛡️</span>
           <div>
-            <h1 id="db-sim-title" style={{ fontSize: '1.35rem', color: 'var(--kiz-text)' }}>
-              Consola de Base de Datos (22 Entidades) & Gobernanza Multi-Tenant
+            <h1 id="db-sim-title" style={{ fontSize: '1.35rem', color: 'var(--kiz-text)', margin: 0 }}>
+              Consola de Base de Datos (22 Entidades) &amp; Gobernanza Multi-Tenant
             </h1>
-            <p style={{ fontSize: '0.8rem', color: 'var(--kiz-text-muted)' }}>
+            <p style={{ fontSize: '0.8rem', color: 'var(--kiz-text-muted)', margin: 0 }}>
               Aislamiento estricto por <code>tenant_id</code>, inmutabilidad de <code>audit_logs</code> y verificación de segregación de funciones.
             </p>
           </div>
@@ -120,7 +121,7 @@ export const DatabaseSimulator: React.FC<DatabaseSimulatorProps> = ({
         {/* Panel Interactivo de Pruebas de Seguridad en Vivo */}
         <div style={{
           marginTop: '1rem',
-          padding: '1rem',
+          padding: '0.85rem',
           backgroundColor: '#f8fafc',
           border: '1px solid var(--kiz-border)',
           borderRadius: 'var(--kiz-radius)'
@@ -129,26 +130,29 @@ export const DatabaseSimulator: React.FC<DatabaseSimulatorProps> = ({
             🧪 Pruebas de Intrusión y Bloqueo en Vivo (Simulador de Firewalls):
           </div>
 
-          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
             <button
               onClick={handleTestCrossTenantAttack}
               className="kiz-btn kiz-btn-danger kiz-btn-sm"
+              style={{ fontSize: '0.75rem', padding: '0.4rem 0.65rem' }}
               title="Prueba el bloqueo de una petición de ORG-A hacia un UUID perteneciente a ORG-B"
             >
-              Simular Ataque Cross-Tenant (ORG-A &rarr; ORG-B UUID)
+              Simular Ataque Cross-Tenant (ORG-A &rarr; ORG-B)
             </button>
 
             <button
               onClick={handleTestTechAdminSegregation}
               className="kiz-btn kiz-btn-secondary kiz-btn-sm"
+              style={{ fontSize: '0.75rem', padding: '0.4rem 0.65rem' }}
               title="Prueba el bloqueo a TECH_ADMIN sobre contenido de negocio"
             >
-              Simular Intento de Lectura Funcional por TECH_ADMIN
+              Simular Bloqueo TECH_ADMIN
             </button>
 
             <button
               onClick={handleRefreshLogs}
               className="kiz-btn kiz-btn-ghost kiz-btn-sm"
+              style={{ fontSize: '0.75rem', padding: '0.4rem 0.65rem' }}
             >
               ↺ Recargar Bitácora
             </button>
@@ -156,18 +160,19 @@ export const DatabaseSimulator: React.FC<DatabaseSimulatorProps> = ({
 
           {/* Resultado de la Prueba de Seguridad */}
           {securityTestResult.status === 'BLOCKED_403' && (
-            <div className="kiz-alert kiz-alert-danger" style={{ marginBottom: 0 }}>
+            <div className="kiz-alert kiz-alert-danger" style={{ marginBottom: 0, marginTop: '0.5rem' }}>
               <span style={{ fontSize: '1.25rem' }}>⛔</span>
-              <div style={{ flex: 1 }}>
-                <strong style={{ fontSize: '0.9rem' }}>{securityTestResult.message}</strong>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <strong style={{ fontSize: '0.85rem' }}>{securityTestResult.message}</strong>
                 <pre style={{
                   marginTop: '0.4rem',
-                  fontSize: '0.72rem',
+                  fontSize: '0.7rem',
                   fontFamily: 'var(--kiz-font-mono)',
                   backgroundColor: 'rgba(0,0,0,0.06)',
                   padding: '0.5rem',
                   borderRadius: 4,
-                  overflowX: 'auto'
+                  overflowX: 'auto',
+                  maxHeight: '180px'
                 }}>
                   {JSON.stringify(securityTestResult.details, null, 2)}
                 </pre>
@@ -177,10 +182,63 @@ export const DatabaseSimulator: React.FC<DatabaseSimulatorProps> = ({
         </div>
       </div>
 
-      {/* Grilla: Explorador de las 22 Entidades + Visor de Audit Logs */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 1fr) minmax(360px, 1.4fr)', gap: '1.25rem' }}>
+      {/* SELECTOR RÁPIDO PARA PANTALLAS PEQUEÑAS / MÓVILES (< 768px) */}
+      <div className="kiz-show-on-mobile" style={{ marginBottom: '1rem' }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: '0.5rem',
+          backgroundColor: 'var(--kiz-surface-subtle)',
+          padding: '0.35rem',
+          borderRadius: 'var(--kiz-radius)',
+          border: '1px solid var(--kiz-border)'
+        }}>
+          <button
+            onClick={() => setActiveMobileView('ENTITIES')}
+            className="kiz-btn"
+            style={{
+              backgroundColor: activeMobileView === 'ENTITIES' ? 'var(--kiz-primary)' : 'transparent',
+              color: activeMobileView === 'ENTITIES' ? '#ffffff' : 'var(--kiz-text)',
+              border: 'none',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              padding: '0.5rem',
+              borderRadius: 'var(--kiz-radius-sm)',
+              boxShadow: activeMobileView === 'ENTITIES' ? 'var(--kiz-shadow-xs)' : 'none'
+            }}
+          >
+            🗄️ 22 Entidades SQL
+          </button>
+          <button
+            onClick={() => setActiveMobileView('AUDIT_LOGS')}
+            className="kiz-btn"
+            style={{
+              backgroundColor: activeMobileView === 'AUDIT_LOGS' ? 'var(--kiz-primary)' : 'transparent',
+              color: activeMobileView === 'AUDIT_LOGS' ? '#ffffff' : 'var(--kiz-text)',
+              border: 'none',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              padding: '0.5rem',
+              borderRadius: 'var(--kiz-radius-sm)',
+              boxShadow: activeMobileView === 'AUDIT_LOGS' ? 'var(--kiz-shadow-xs)' : 'none'
+            }}
+          >
+            📜 Bitácora ({auditLogs.length})
+          </button>
+        </div>
+      </div>
+
+      {/* Grilla Adaptable: repeat(auto-fit, minmax(min(100%, 320px), 1fr)) */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
+        gap: '1.25rem'
+      }}>
         {/* Columna Izquierda: Las 22 Entidades del PRD */}
-        <div className="kiz-card" style={{ padding: '1rem' }}>
+        <div
+          className={`kiz-card ${activeMobileView !== 'ENTITIES' ? 'kiz-hide-on-mobile' : ''}`}
+          style={{ padding: '1rem' }}
+        >
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -189,15 +247,15 @@ export const DatabaseSimulator: React.FC<DatabaseSimulatorProps> = ({
             borderBottom: '1px solid var(--kiz-border-subtle)',
             paddingBottom: '0.5rem'
           }}>
-            <h3 style={{ fontSize: '0.95rem', color: 'var(--kiz-primary)' }}>
-              Catálogo de las 22 Entidades del PRD
+            <h3 style={{ fontSize: '0.95rem', color: 'var(--kiz-primary)', margin: 0 }}>
+              Catálogo de 22 Entidades
             </h3>
             <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--kiz-text-subtle)' }}>
               22 Tablas Activas
             </span>
           </div>
 
-          <div style={{ maxHeight: '650px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+          <div style={{ maxHeight: '600px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
             {entities.map((ent) => {
               const isSelected = selectedEntity === ent.name;
               return (
@@ -236,7 +294,7 @@ export const DatabaseSimulator: React.FC<DatabaseSimulatorProps> = ({
                   <div style={{ fontSize: '0.7rem', color: 'var(--kiz-text-muted)' }}>
                     {ent.description}
                   </div>
-                  <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.65rem', color: 'var(--kiz-text-subtle)' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.65rem', color: 'var(--kiz-text-subtle)', flexWrap: 'wrap' }}>
                     <span>PK: <code>{ent.primaryKey}</code></span>
                     <span>&middot;</span>
                     <span style={{ color: ent.tenantScoped ? 'var(--kiz-info)' : 'var(--kiz-text-subtle)' }}>
@@ -250,7 +308,10 @@ export const DatabaseSimulator: React.FC<DatabaseSimulatorProps> = ({
         </div>
 
         {/* Columna Derecha: Visor de Audit Logs Inmutables */}
-        <div className="kiz-card" style={{ padding: '1rem' }}>
+        <div
+          className={`kiz-card ${activeMobileView !== 'AUDIT_LOGS' ? 'kiz-hide-on-mobile' : ''}`}
+          style={{ padding: '1rem' }}
+        >
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -260,11 +321,11 @@ export const DatabaseSimulator: React.FC<DatabaseSimulatorProps> = ({
             paddingBottom: '0.5rem'
           }}>
             <div>
-              <h3 style={{ fontSize: '0.95rem', color: 'var(--kiz-primary)' }}>
-                Bitácora Inmutable de Auditoría (`audit_logs`)
+              <h3 style={{ fontSize: '0.95rem', color: 'var(--kiz-primary)', margin: 0 }}>
+                Bitácora Inmutable (`audit_logs`)
               </h3>
-              <p style={{ fontSize: '0.7rem', color: 'var(--kiz-text-subtle)' }}>
-                Registro append-only con snapshots JSON y eventos de seguridad
+              <p style={{ fontSize: '0.7rem', color: 'var(--kiz-text-subtle)', margin: 0 }}>
+                Append-only con snapshots JSON y alertas 403
               </p>
             </div>
             <span style={{
@@ -279,7 +340,7 @@ export const DatabaseSimulator: React.FC<DatabaseSimulatorProps> = ({
             </span>
           </div>
 
-          <div style={{ maxHeight: '650px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+          <div style={{ maxHeight: '600px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
             {auditLogs.map((log) => {
               const isSecurityAlert =
                 log.action.includes('DENIED') || log.action.includes('BLOCKED');
@@ -287,45 +348,46 @@ export const DatabaseSimulator: React.FC<DatabaseSimulatorProps> = ({
                 <div
                   key={log.id}
                   style={{
-                    padding: '0.75rem',
+                    padding: '0.65rem',
                     borderRadius: 'var(--kiz-radius)',
                     border: isSecurityAlert ? '1px solid #fca5a5' : '1px solid var(--kiz-border)',
                     backgroundColor: isSecurityAlert ? '#fff1f2' : 'var(--kiz-surface-subtle)',
                     borderLeft: isSecurityAlert ? '4px solid #b91c1c' : '4px solid var(--kiz-primary)'
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem', flexWrap: 'wrap', gap: '0.25rem' }}>
                     <span style={{
-                      fontSize: '0.75rem',
+                      fontSize: '0.72rem',
                       fontFamily: 'var(--kiz-font-mono)',
                       fontWeight: 700,
                       color: isSecurityAlert ? '#b91c1c' : 'var(--kiz-primary)'
                     }}>
                       {log.action}
                     </span>
-                    <span style={{ fontSize: '0.68rem', fontFamily: 'var(--kiz-font-mono)', color: 'var(--kiz-text-subtle)' }}>
+                    <span style={{ fontSize: '0.65rem', fontFamily: 'var(--kiz-font-mono)', color: 'var(--kiz-text-subtle)' }}>
                       {log.timestamp.replace('T', ' ').split('.')[0]} UTC
                     </span>
                   </div>
 
-                  <div style={{ fontSize: '0.72rem', color: 'var(--kiz-text-muted)', marginBottom: '0.35rem' }}>
-                    Actor: <strong>{log.performedBy}</strong> &middot; Tenant: <strong>{log.tenantId}</strong> &middot; Entidad: <code>{log.entity} ({log.entityId})</code>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--kiz-text-muted)', marginBottom: '0.3rem' }}>
+                    Actor: <strong>{log.performedBy}</strong> &middot; Tenant: <strong>{log.tenantId}</strong> &middot; Entidad: <code>{log.entity}</code>
                   </div>
 
                   {log.payloadSnapshot && (
-                    <details style={{ marginTop: '0.25rem' }}>
+                    <details style={{ marginTop: '0.2rem' }}>
                       <summary style={{ fontSize: '0.68rem', color: 'var(--kiz-primary)', cursor: 'pointer', fontWeight: 600 }}>
-                        Ver Snapshot JSON del Payload
+                        Ver Snapshot JSON
                       </summary>
                       <pre style={{
-                        marginTop: '0.35rem',
-                        fontSize: '0.68rem',
+                        marginTop: '0.3rem',
+                        fontSize: '0.65rem',
                         fontFamily: 'var(--kiz-font-mono)',
                         backgroundColor: '#ffffff',
-                        padding: '0.5rem',
+                        padding: '0.45rem',
                         borderRadius: 4,
                         border: '1px solid var(--kiz-border-subtle)',
-                        overflowX: 'auto'
+                        overflowX: 'auto',
+                        maxHeight: '160px'
                       }}>
                         {JSON.stringify(log.payloadSnapshot, null, 2)}
                       </pre>

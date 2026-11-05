@@ -25,6 +25,10 @@ from kizukai_py.engine import (
     PrivilegeViolationException,
     MFARequiredException,
     AuditLogTamperingException,
+    classify_viewport,
+    get_mobile_role_profile,
+    validate_mobile_wizard_step,
+    get_mobile_quick_action_for_initiative,
 )
 
 
@@ -633,3 +637,116 @@ def test_bdd_hu05_export_report_multi_tenant_audit_metadata_scenario(engine: Kiz
     assert report.total_records == 3
     assert report.generated_at_utc.endswith("Z")
     assert all(row["organization_id"] == "ORG-A" for row in report.rows)
+
+
+# ============================================================================
+# ESPECIFICACIÓN MOBILE WEB APP POR ROL (CA-MOB-01 A CA-MOB-05)
+# ============================================================================
+
+
+def test_ca_mob_01_viewport_classification_and_desktop_intangibility():
+    """CA-MOB-01: Clasificación determinista de viewport (<768 MOBILE, 768..1023 TABLET, >=1024 DESKTOP)."""
+    mob = classify_viewport(390)
+    assert mob.mode == "MOBILE"
+    assert mob.isMobile is True
+    assert mob.showBottomNav is True
+    assert mob.useBottomSheetModals is True
+    assert mob.useCardTables is True
+
+    tab = classify_viewport(820)
+    assert tab.mode == "TABLET"
+    assert tab.isTablet is True
+    assert tab.showBottomNav is True
+
+    desk = classify_viewport(1280)
+    assert desk.mode == "DESKTOP"
+    assert desk.isDesktop is True
+    assert desk.showBottomNav is False
+    assert desk.useBottomSheetModals is False
+    assert desk.useCardTables is False
+
+
+def test_ca_mob_02_role_profiles_for_all_5_roles():
+    """CA-MOB-02: Configuración simplificada de vista móvil para los 5 roles."""
+    p = get_mobile_role_profile("PARTICIPANT")
+    m = get_mobile_role_profile("MENTOR")
+    c = get_mobile_role_profile("COORDINATOR")
+    k = get_mobile_role_profile("CONSULTANT")
+    t = get_mobile_role_profile("TECH_ADMIN")
+
+    assert p.modeTitle == "Modo Gemba Express"
+    assert m.modeTitle == "Modo Gemba Walk & 5S"
+    assert c.modeTitle == "Modo Triage & Asignación"
+    assert k.modeTitle == "Modo Pulso Ejecutivo"
+    assert t.modeTitle == "Modo Pocket Control & RBAC"
+    assert t.allowQuickCardActions is False
+
+
+def test_ca_mob_03_mobile_wizard_3_steps_validation():
+    """CA-MOB-03: Validación paso a paso del wizard móvil de 3 pasos para crear iniciativas K2."""
+    s1_fail = validate_mobile_wizard_step(1, {"title": "abc", "department": "", "guideline": ""})
+    assert s1_fail.valid is False
+
+    s1_ok = validate_mobile_wizard_step(
+        1,
+        {
+            "title": "Poka-Yoke en guía de empaque",
+            "department": "Empaque",
+            "guideline": "Calidad",
+        },
+    )
+    assert s1_ok.valid is True
+
+    s2_ok = validate_mobile_wizard_step(
+        2,
+        {
+            "k0_deficient": "Etiquetas desalineadas constantemente en lote",
+            "k1_basic_function": "Guía lateral fija",
+            "k2_proactivity": "Fabricar tope con sobrante de nylamid en taller",
+        },
+    )
+    assert s2_ok.valid is True
+
+    s3_fail = validate_mobile_wizard_step(
+        3,
+        {
+            "k3_expected_impact": "Cero defectos de etiquetado",
+            "zero_investment_verified": False,
+            "asDraft": False,
+        },
+    )
+    assert s3_fail.valid is False
+
+    s3_ok = validate_mobile_wizard_step(
+        3,
+        {
+            "k3_expected_impact": "Cero defectos de etiquetado",
+            "zero_investment_verified": True,
+            "asDraft": False,
+        },
+    )
+    assert s3_ok.valid is True
+
+
+def test_ca_mob_04_and_05_mobile_quick_actions_and_rbac_enforcement():
+    """CA-MOB-04 y CA-MOB-05: Acciones rápidas de 1 toque por rol/estado y bloqueo RBAC de TECH_ADMIN."""
+    act_part = get_mobile_quick_action_for_initiative("PARTICIPANT", "DEVUELTA_PARA_AJUSTES")
+    assert act_part.actionCode == "REMITIR_CORRECCION_RAPIDA"
+    assert act_part.isAvailable is True
+
+    act_coord_1 = get_mobile_quick_action_for_initiative("COORDINATOR", "POR_APROBAR")
+    assert act_coord_1.actionCode == "APROBAR_FILTRO_1TAP"
+
+    act_coord_2 = get_mobile_quick_action_for_initiative("COORDINATOR", "PENDIENTE_ASIGNACION_MENTOR")
+    assert act_coord_2.actionCode == "ASIGNAR_MENTOR_RAPIDO"
+
+    act_mentor_1 = get_mobile_quick_action_for_initiative("MENTOR", "PENDIENTE_PLAN_IMPLEMENTACION")
+    assert act_mentor_1.actionCode == "VALIDAR_PLAN_RAPIDO"
+
+    act_mentor_2 = get_mobile_quick_action_for_initiative("MENTOR", "POR_EVALUAR")
+    assert act_mentor_2.actionCode == "FIRMAR_5S_Y_APROBAR_K3"
+
+    act_tech = get_mobile_quick_action_for_initiative("TECH_ADMIN", "POR_EVALUAR")
+    assert act_tech.actionCode == "NINGUNA_ACCION_OPERATIVA"
+    assert act_tech.isAvailable is False
+

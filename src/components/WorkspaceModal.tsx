@@ -1191,13 +1191,45 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
           )}
         </div>
 
-        {/* Footer */}
-        <div className="kiz-modal-footer">
+        {/* Footer Desktop */}
+        <div className="kiz-modal-footer kiz-hide-on-mobile">
           <button onClick={onClose} className="kiz-btn kiz-btn-secondary">
             Cerrar Workspace
           </button>
         </div>
+
+        {/* Barra Fija Inferior en Móvil (Thumb-Zone Sticky Action Bar) */}
+        <div className="kiz-sticky-action-bar" aria-label="Acción móvil en zona del pulgar">
+          {nextAction.isMultiAction && nextAction.renderCustom ? (
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {nextAction.renderCustom()}
+            </div>
+          ) : (
+            <button
+              onClick={nextAction.onExecute}
+              className="kiz-btn"
+              style={{
+                backgroundColor: nextAction.buttonColor || 'var(--kiz-primary)',
+                color: '#ffffff',
+                fontWeight: 700,
+                flex: 1
+              }}
+            >
+              {nextAction.buttonText}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onClose}
+            className="kiz-btn kiz-btn-secondary kiz-btn-sm"
+            style={{ minHeight: 48, padding: '0 0.85rem' }}
+            aria-label="Cerrar modal"
+          >
+            ✕
+          </button>
+        </div>
       </div>
     </div>
+
   );
 };

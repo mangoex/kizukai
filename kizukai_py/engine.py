@@ -942,3 +942,332 @@ class KizukaiEngine:
             generated_at_utc=now,
             rows=rows,
         )
+
+
+# ============================================================================
+# MOTOR DETERMINISTA DE EXPERIENCIA MÓVIL POR ROL (CA-MOB-01 A CA-MOB-05)
+# ============================================================================
+
+
+@dataclass
+class ViewportClassification:
+    mode: str
+    isMobile: bool
+    isTablet: bool
+    isDesktop: bool
+    showBottomNav: bool
+    useBottomSheetModals: bool
+    useCardTables: bool
+
+
+@dataclass
+class MobileRoleProfile:
+    role: str
+    modeTitle: str
+    subtitle: str
+    primaryCtaLabel: str
+    quickPills: List[str]
+    allowQuickCardActions: bool
+    bottomNavItems: List[Dict[str, str]]
+
+
+@dataclass
+class MobileWizardValidationResult:
+    valid: bool
+    step: int
+    errors: List[str]
+    canAdvance: bool
+
+
+@dataclass
+class MobileQuickActionDescriptor:
+    actionCode: str
+    label: str
+    requiresConfirmationSheet: bool
+    isAvailable: bool
+    thumbZonePriority: str
+
+
+def _normalize_mobile_role(role: Any) -> str:
+    val = role.value if isinstance(role, Enum) else str(role)
+    if val in ("PARTICIPANT", "EMPLOYEE", "LEADER"):
+        return "PARTICIPANT"
+    if val in ("MENTOR", "EVALUATOR"):
+        return "MENTOR"
+    if val in ("COORDINATOR", "PROGRAM_COORDINATOR"):
+        return "COORDINATOR"
+    if val == "CONSULTANT":
+        return "CONSULTANT"
+    if val == "TECH_ADMIN":
+        return "TECH_ADMIN"
+    return "PARTICIPANT"
+
+
+def classify_viewport(width: int) -> ViewportClassification:
+    """CA-MOB-01: Clasifica el viewport garantizando intangibilidad en Desktop (>= 1024px)."""
+    safe_width = width if isinstance(width, (int, float)) and width > 0 else 1280
+    if safe_width < 768:
+        return ViewportClassification(
+            mode="MOBILE",
+            isMobile=True,
+            isTablet=False,
+            isDesktop=False,
+            showBottomNav=True,
+            useBottomSheetModals=True,
+            useCardTables=True,
+        )
+    if safe_width < 1024:
+        return ViewportClassification(
+            mode="TABLET",
+            isMobile=False,
+            isTablet=True,
+            isDesktop=False,
+            showBottomNav=True,
+            useBottomSheetModals=True,
+            useCardTables=True,
+        )
+    return ViewportClassification(
+        mode="DESKTOP",
+        isMobile=False,
+        isTablet=False,
+        isDesktop=True,
+        showBottomNav=False,
+        useBottomSheetModals=False,
+        useCardTables=False,
+    )
+
+
+def get_mobile_role_profile(role: Any) -> MobileRoleProfile:
+    """CA-MOB-02: Configuración simplificada de la vista móvil para cada uno de los 5 roles."""
+    canonical = _normalize_mobile_role(role)
+    if canonical == "PARTICIPANT":
+        return MobileRoleProfile(
+            role="PARTICIPANT",
+            modeTitle="Modo Gemba Express",
+            subtitle="Captura rápida K2 Cero Inversión y seguimiento de mis mejoras en piso",
+            primaryCtaLabel="+ Nueva Idea K2 (3 Pasos)",
+            quickPills=[" Requieren Ajuste", "En Implementación", "Borradores", "Finalizadas"],
+            allowQuickCardActions=True,
+            bottomNavItems=[
+                {"id": "INBOX", "label": "Mis Ideas"},
+                {"id": "NEW_IDEA", "label": "+ Capturar K2"},
+                {"id": "WORKSPACE", "label": "Espacio"},
+                {"id": "PROFILE", "label": "Rol"},
+            ],
+        )
+    if canonical == "MENTOR":
+        return MobileRoleProfile(
+            role="MENTOR",
+            modeTitle="Modo Gemba Walk & 5S",
+            subtitle="Auditoría en sitio, validación de planes <= 8 semanas y dictamen K3",
+            primaryCtaLabel="Evaluar Entregable / 5S",
+            quickPills=["Por Evaluar K3", "Validar Plan 8 Sem", "Próximas a Vencer", "Todas"],
+            allowQuickCardActions=True,
+            bottomNavItems=[
+                {"id": "INBOX", "label": "Por Evaluar"},
+                {"id": "WORKSPACE", "label": "Auditoría 5S"},
+                {"id": "REPORTS", "label": "Métricas"},
+                {"id": "PROFILE", "label": "Rol"},
+            ],
+        )
+    if canonical == "COORDINATOR":
+        return MobileRoleProfile(
+            role="COORDINATOR",
+            modeTitle="Modo Triage & Asignación",
+            subtitle="Filtro técnico Cero Inversión de 1 toque y asignación ágil de mentores",
+            primaryCtaLabel="Triage de Bandeja",
+            quickPills=["Filtro Técnico (Por Aprobar)", "Sin Mentor", "Por Documentar POE", "Alerta > 7d"],
+            allowQuickCardActions=True,
+            bottomNavItems=[
+                {"id": "INBOX", "label": "Triage"},
+                {"id": "WORKSPACE", "label": "Asignar"},
+                {"id": "REPORTS", "label": "Reportes"},
+                {"id": "PROFILE", "label": "Rol"},
+            ],
+        )
+    if canonical == "CONSULTANT":
+        return MobileRoleProfile(
+            role="CONSULTANT",
+            modeTitle="Modo Pulso Ejecutivo",
+            subtitle="Supervisión multiempresa, ahorros K3 validados y exportación móvil",
+            primaryCtaLabel="Exportar Sabana C (.xlsx)",
+            quickPills=["Consolidado Global", "Top Prácticas K3", "Por Documentar POE", "En Riesgo"],
+            allowQuickCardActions=True,
+            bottomNavItems=[
+                {"id": "INBOX", "label": "Portafolio"},
+                {"id": "REPORTS", "label": "Sabana .XLSX"},
+                {"id": "WORKSPACE", "label": "Detalle"},
+                {"id": "PROFILE", "label": "Rol"},
+            ],
+        )
+    return MobileRoleProfile(
+        role="TECH_ADMIN",
+        modeTitle="Modo Pocket Control & RBAC",
+        subtitle="Gobernanza Multi-Tenant, verificación MFA y auditoría sin acceso a contenido",
+        primaryCtaLabel="Verificar Estado MFA & Tenants",
+        quickPills=[" Estado MFA", "Aislamiento Tenant", "Logs Inmutables"],
+        allowQuickCardActions=False,
+        bottomNavItems=[
+            {"id": "INBOX", "label": "Seguridad"},
+            {"id": "REPORTS", "label": "Auditoría"},
+            {"id": "PROFILE", "label": "Rol"},
+        ],
+    )
+
+
+def validate_mobile_wizard_step(step: int, payload: Dict[str, Any]) -> MobileWizardValidationResult:
+    """CA-MOB-03: Valida paso a paso el wizard móvil de 3 pasos para crear iniciativas K2."""
+    errors: List[str] = []
+    if step == 1:
+        if len(str(payload.get("title", "")).strip()) < 5:
+            errors.append("El título de la mejora requiere al menos 5 caracteres.")
+        if not str(payload.get("department", "")).strip():
+            errors.append("Selecciona el departamento o área operativa.")
+        if not str(payload.get("guideline", "")).strip():
+            errors.append("Selecciona la directriz estratégica de impacto.")
+    elif step == 2:
+        if len(str(payload.get("k0_deficient", "")).strip()) < 10:
+            errors.append("Describe la situación deficiente actual (K0) con al menos 10 caracteres.")
+        if len(str(payload.get("k1_basic_function", "")).strip()) < 5:
+            errors.append("Especifica la condición básica (K1) con al menos 5 caracteres.")
+        if len(str(payload.get("k2_proactivity", "")).strip()) < 10:
+            errors.append("Detalla la mejora creativa Cero Inversión (K2) con al menos 10 caracteres.")
+    elif step == 3:
+        if len(str(payload.get("k3_expected_impact", "")).strip()) < 5:
+            errors.append("Indica el beneficio esperado (K3) con al menos 5 caracteres.")
+        if not payload.get("asDraft", False) and payload.get("zero_investment_verified") is not True:
+            errors.append("Debes confirmar explícitamente que la propuesta K2 cumple Cero Inversión (CAPEX = $0).")
+
+    return MobileWizardValidationResult(
+        valid=len(errors) == 0,
+        step=step,
+        errors=errors,
+        canAdvance=len(errors) == 0,
+    )
+
+
+def get_mobile_quick_action_for_initiative(role: Any, state: Any) -> MobileQuickActionDescriptor:
+    """CA-MOB-04: Retorna la acción rápida de 1 toque para tarjetas móviles y Sticky Thumb-Zone Action Bar."""
+    canonical = _normalize_mobile_role(role)
+    st = state.value if isinstance(state, Enum) else str(state)
+
+    if canonical == "TECH_ADMIN":
+        return MobileQuickActionDescriptor(
+            actionCode="NINGUNA_ACCION_OPERATIVA",
+            label="Bloqueado por RBAC (Solo Metadatos)",
+            requiresConfirmationSheet=False,
+            isAvailable=False,
+            thumbZonePriority="READ_ONLY",
+        )
+
+    if canonical == "PARTICIPANT":
+        if st == "BORRADOR":
+            return MobileQuickActionDescriptor(
+                actionCode="ENVIAR_A_REVISION_RAPIDA",
+                label="Enviar Idea a Revisión",
+                requiresConfirmationSheet=False,
+                isAvailable=True,
+                thumbZonePriority="PRIMARY",
+            )
+        if st == "DEVUELTA_PARA_AJUSTES":
+            return MobileQuickActionDescriptor(
+                actionCode="REMITIR_CORRECCION_RAPIDA",
+                label="Subir Nueva Versión y Remitir",
+                requiresConfirmationSheet=True,
+                isAvailable=True,
+                thumbZonePriority="PRIMARY",
+            )
+        if st == "EN_IMPLEMENTACION":
+            return MobileQuickActionDescriptor(
+                actionCode="NOTIFICAR_TERMINO_OBRA_RAPIDA",
+                label="Completar Plan (100%) y Notificar",
+                requiresConfirmationSheet=False,
+                isAvailable=True,
+                thumbZonePriority="PRIMARY",
+            )
+        if st == "PENDIENTE_RESULTADOS":
+            return MobileQuickActionDescriptor(
+                actionCode="ENVIAR_EVIDENCIA_K3_RAPIDA",
+                label="Enviar Evidencias K0/K3 a Evaluación",
+                requiresConfirmationSheet=False,
+                isAvailable=True,
+                thumbZonePriority="PRIMARY",
+            )
+
+    if canonical == "COORDINATOR":
+        if st == "POR_APROBAR":
+            return MobileQuickActionDescriptor(
+                actionCode="APROBAR_FILTRO_1TAP",
+                label="Aprobar Filtro Cero Inversión",
+                requiresConfirmationSheet=False,
+                isAvailable=True,
+                thumbZonePriority="PRIMARY",
+            )
+        if st == "PENDIENTE_ASIGNACION_MENTOR":
+            return MobileQuickActionDescriptor(
+                actionCode="ASIGNAR_MENTOR_RAPIDO",
+                label="Asignar Mentor en 1 Toque",
+                requiresConfirmationSheet=True,
+                isAvailable=True,
+                thumbZonePriority="PRIMARY",
+            )
+        if st == "POR_DOCUMENTAR":
+            return MobileQuickActionDescriptor(
+                actionCode="PUBLICAR_POE_RAPIDO",
+                label="Publicar Estándar POE y Cerrar",
+                requiresConfirmationSheet=False,
+                isAvailable=True,
+                thumbZonePriority="PRIMARY",
+            )
+
+    if canonical == "MENTOR":
+        if st == "PENDIENTE_PLAN_IMPLEMENTACION":
+            return MobileQuickActionDescriptor(
+                actionCode="VALIDAR_PLAN_RAPIDO",
+                label="Validar Plan (<= 8 Semanas)",
+                requiresConfirmationSheet=False,
+                isAvailable=True,
+                thumbZonePriority="PRIMARY",
+            )
+        if st == "POR_EVALUAR":
+            return MobileQuickActionDescriptor(
+                actionCode="FIRMAR_5S_Y_APROBAR_K3",
+                label="Firmar Auditoría 5S y Aprobar K3",
+                requiresConfirmationSheet=True,
+                isAvailable=True,
+                thumbZonePriority="PRIMARY",
+            )
+
+    if canonical == "CONSULTANT":
+        if st == "POR_APROBAR":
+            return MobileQuickActionDescriptor(
+                actionCode="APROBAR_FILTRO_1TAP",
+                label="Aprobar Filtro Cero Inversión",
+                requiresConfirmationSheet=False,
+                isAvailable=True,
+                thumbZonePriority="PRIMARY",
+            )
+        if st == "POR_DOCUMENTAR":
+            return MobileQuickActionDescriptor(
+                actionCode="PUBLICAR_POE_RAPIDO",
+                label="Publicar Estándar POE y Cerrar",
+                requiresConfirmationSheet=False,
+                isAvailable=True,
+                thumbZonePriority="PRIMARY",
+            )
+
+    return MobileQuickActionDescriptor(
+        actionCode="CONSULTAR_DETALLE_EJECUTIVO",
+        label="Ver Ficha de Iniciativa",
+        requiresConfirmationSheet=False,
+        isAvailable=False,
+        thumbZonePriority="SECONDARY",
+    )
+
+
+# Alias en camelCase para paridad 1:1 con TypeScript
+classifyViewport = classify_viewport
+getMobileRoleProfile = get_mobile_role_profile
+validateMobileWizardStep = validate_mobile_wizard_step
+getMobileQuickActionForInitiative = get_mobile_quick_action_for_initiative
+

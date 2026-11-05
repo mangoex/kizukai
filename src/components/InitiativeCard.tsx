@@ -1,15 +1,24 @@
-import React from 'react';
-import { Initiative } from '../types/index.ts';
+import React, { useState } from 'react';
+import { Initiative, User } from '../types/index.ts';
+import { getMobileQuickActionForInitiative, MobileQuickActionCode } from '../domain/mobileUxEngine.ts';
+import { StorageService } from '../services/storageService.ts';
 
 interface InitiativeCardProps {
   initiative: Initiative;
+  currentUser?: User;
   onOpenWorkspace: (initiative: Initiative) => void;
+  onQuickActionUpdated?: (initiative: Initiative) => void;
 }
 
 export const InitiativeCard: React.FC<InitiativeCardProps> = ({
   initiative,
-  onOpenWorkspace
+  currentUser,
+  onOpenWorkspace,
+  onQuickActionUpdated,
 }) => {
+  const [isProcessingAction, setIsProcessingAction] = useState(false);
+  const [actionFeedback, setActionFeedback] = useState<string | null>(null);
+
   const getGuidelineColor = (guideline: string) => {
     switch (guideline) {
       case 'CALIDAD': return { bg: '#eff6ff', text: '#1e40af', border: '#bfdbfe' };
@@ -23,6 +32,170 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
 
   const gStyle = getGuidelineColor(initiative.guideline);
 
+  // Consulta de Acción Rápida Móvil (1-Tap)
+  const quickActionDesc = currentUser && currentUser.role !== 'TECH_ADMIN'
+    ? getMobileQuickActionForInitiative(currentUser.role, initiative.state)
+    : null;
+
+  const hasQuickAction =
+    Boolean(quickActionDesc?.isAvailable) &&
+    quickActionDesc?.actionCode !== 'NINGUNA_ACCION_OPERATIVA' &&
+    quickActionDesc?.actionCode !== 'CONSULTAR_DETALLE_EJECUTIVO';
+
+  const getQuickActionUi = (code: MobileQuickActionCode) => {
+    switch (code) {
+      case 'APROBAR_FILTRO_1TAP':
+        return {
+          label: '✓ Aprobar Filtro 1-Tap',
+          bg: '#16a34a',
+          hoverBg: '#15803d',
+        };
+      case 'ASIGNAR_MENTOR_RAPIDO':
+        return {
+          label: '🧑‍🏫 Asignar a Carlos M.',
+          bg: '#2563eb',
+          hoverBg: '#1d4ed8',
+        };
+      case 'VALIDAR_PLAN_RAPIDO':
+        return {
+          label: '✓ Validar Plan 8 Sem.',
+          bg: '#0891b2',
+          hoverBg: '#0e7490',
+        };
+      case 'FIRMAR_5S_Y_APROBAR_K3':
+        return {
+          label: '✍️ Firmar 5S y Aprobar K3',
+          bg: '#7c3aed',
+          hoverBg: '#6d28d9',
+        };
+      case 'REMITIR_CORRECCION_RAPIDA':
+        return {
+          label: '📤 Subir Evidencia v2.0 Rápida',
+          bg: '#ea580c',
+          hoverBg: '#c2410c',
+        };
+      case 'ENVIAR_A_REVISION_RAPIDA':
+        return {
+          label: '🚀 Enviar a Revisión',
+          bg: '#2563eb',
+          hoverBg: '#1d4ed8',
+        };
+      case 'NOTIFICAR_TERMINO_OBRA_RAPIDA':
+        return {
+          label: '✓ Notificar Término (100%)',
+          bg: '#059669',
+          hoverBg: '#047857',
+        };
+      case 'ENVIAR_EVIDENCIA_K3_RAPIDA':
+        return {
+          label: '📋 Enviar a Evaluación K3',
+          bg: '#4f46e5',
+          hoverBg: '#4338ca',
+        };
+      case 'PUBLICAR_POE_RAPIDO':
+        return {
+          label: '📜 Publicar Estándar POE',
+          bg: '#0f766e',
+          hoverBg: '#115e59',
+        };
+      default:
+        return {
+          label: quickActionDesc?.label || 'Ejecutar Acción',
+          bg: 'var(--kiz-primary)',
+          hoverBg: 'var(--kiz-primary-dark)',
+        };
+    }
+  };
+
+  const handleExecute1TapAction = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!currentUser || !quickActionDesc || isProcessingAction) return;
+
+    setIsProcessingAction(true);
+    setActionFeedback(null);
+
+    let transitionAction = '';
+    let payloadData: any = { user: currentUser };
+
+    switch (quickActionDesc.actionCode) {
+      case 'APROBAR_FILTRO_1TAP':
+        transitionAction = 'APROBAR_FILTRO_TECNICO';
+        break;
+      case 'ASIGNAR_MENTOR_RAPIDO':
+        transitionAction = 'ASIGNAR_MENTOR';
+        payloadData = {
+          user: currentUser,
+          mentorId: 'usr-002-carlos',
+          mentorName: 'Carlos Mendoza',
+          justification: 'Asignación ágil en 1 toque desde bandeja móvil',
+        };
+        break;
+      case 'VALIDAR_PLAN_RAPIDO':
+        transitionAction = 'VALIDAR_PLAN';
+        payloadData = {
+          user: currentUser,
+          weeksCount: 8,
+          justification: 'Plan validado en 8 semanas (ventana máxima) en 1 toque',
+        };
+        break;
+      case 'FIRMAR_5S_Y_APROBAR_K3':
+        transitionAction = 'APROBAR_EVALUACION_K3';
+        payloadData = {
+          user: currentUser,
+          checklist5s: {
+            seiri: true,
+            seiton: true,
+            seiso: true,
+            seiketsu: true,
+            shitsuke: true,
+            digitalSignature: `Firma-Gemba-${currentUser.name.replace(/\s+/g, '')}`,
+            score: 100,
+          },
+        };
+        break;
+      case 'REMITIR_CORRECCION_RAPIDA':
+        transitionAction = 'REMITIR_CORRECCION';
+        payloadData = {
+          user: currentUser,
+          evidenceTitle: 'Evidencia Corregida v2.0 - Validación Gemba',
+          evidenceType: 'MEDICION_GEMBA',
+          evidenceUrlOrText: 'Nueva corrida estable en Gemba con mediciones corregidas.',
+        };
+        break;
+      case 'ENVIAR_A_REVISION_RAPIDA':
+        transitionAction = 'ENVIAR_A_REVISION';
+        break;
+      case 'NOTIFICAR_TERMINO_OBRA_RAPIDA':
+        transitionAction = 'NOTIFICAR_TERMINO_OBRA';
+        break;
+      case 'ENVIAR_EVIDENCIA_K3_RAPIDA':
+        transitionAction = 'ENVIAR_A_EVALUACION';
+        break;
+      case 'PUBLICAR_POE_RAPIDO':
+        transitionAction = 'PUBLICAR_ESTANDAR_POE';
+        break;
+      default:
+        setIsProcessingAction(false);
+        return;
+    }
+
+    try {
+      const res = StorageService.transitionInitiative(initiative.id, transitionAction, payloadData);
+      if (res.success && res.initiative) {
+        setActionFeedback('✓ ¡Actualizado con éxito!');
+        onQuickActionUpdated?.(res.initiative);
+      } else {
+        setActionFeedback(res.error || 'Error al procesar acción');
+      }
+    } catch (err: any) {
+      setActionFeedback(err.message || 'Error de transición');
+    } finally {
+      setIsProcessingAction(false);
+    }
+  };
+
+  const actionUi = quickActionDesc ? getQuickActionUi(quickActionDesc.actionCode) : null;
+
   return (
     <article
       className="kiz-card kiz-card-hover"
@@ -30,7 +203,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        position: 'relative'
+        position: 'relative',
       }}
     >
       {/* Alerta de Estancamiento (> 7 días) */}
@@ -48,7 +221,8 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
           boxShadow: 'var(--kiz-shadow-sm)',
           display: 'flex',
           alignItems: 'center',
-          gap: '0.25rem'
+          gap: '0.25rem',
+          zIndex: 2,
         }}>
           <span>⏱️</span> Estancada (&gt; 7 días)
         </div>
@@ -62,7 +236,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
           justifyContent: 'space-between',
           marginBottom: '0.65rem',
           flexWrap: 'wrap',
-          gap: '0.4rem'
+          gap: '0.4rem',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <span style={{
@@ -73,7 +247,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
               backgroundColor: 'var(--kiz-surface-subtle)',
               padding: '0.15rem 0.45rem',
               borderRadius: 'var(--kiz-radius-xs)',
-              border: '1px solid var(--kiz-border)'
+              border: '1px solid var(--kiz-border)',
             }}>
               {initiative.folio}
             </span>
@@ -85,7 +259,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
               color: gStyle.text,
               border: `1px solid ${gStyle.border}`,
               padding: '0.15rem 0.45rem',
-              borderRadius: 'var(--kiz-radius-xs)'
+              borderRadius: 'var(--kiz-radius-xs)',
             }}>
               {initiative.guideline}
             </span>
@@ -103,7 +277,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
           fontWeight: 700,
           lineHeight: 1.35,
           color: 'var(--kiz-text)',
-          marginBottom: '0.5rem'
+          marginBottom: '0.5rem',
         }}>
           {initiative.title}
         </h3>
@@ -115,7 +289,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
           display: 'flex',
           flexDirection: 'column',
           gap: '0.25rem',
-          marginBottom: '0.75rem'
+          marginBottom: '0.75rem',
         }}>
           <div>
             🏢 <strong>{initiative.tenantName}</strong> &middot; {initiative.department}
@@ -136,7 +310,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
           fontSize: '0.72rem',
           color: 'var(--kiz-text-muted)',
           marginBottom: '0.85rem',
-          borderLeft: '3px solid var(--kiz-accent)'
+          borderLeft: '3px solid var(--kiz-accent)',
         }}>
           <div style={{ fontWeight: 600, color: 'var(--kiz-text)', marginBottom: '0.2rem' }}>
             K2 Proactividad:
@@ -145,7 +319,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
             display: '-webkit-box',
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
-            overflow: 'hidden'
+            overflow: 'hidden',
           }}>
             {initiative.diagnostic.k2_proactivity}
           </p>
@@ -160,7 +334,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
             justifyContent: 'space-between',
             fontSize: '0.72rem',
             marginBottom: '0.25rem',
-            color: 'var(--kiz-text-subtle)'
+            color: 'var(--kiz-text-subtle)',
           }}>
             <span>Paso {initiative.currentStep} de 6 Metodológico</span>
             <strong>{initiative.progressPercent}%</strong>
@@ -170,14 +344,73 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
           </div>
         </div>
 
-        {/* Footer de Tarjeta con Botón de Apertura */}
+        {/* Barra de Acción Rápida Móvil (1-Tap) */}
+        {hasQuickAction && actionUi && (
+          <div style={{
+            marginBottom: '0.65rem',
+            padding: '0.5rem 0.6rem',
+            backgroundColor: 'var(--kiz-surface-subtle)',
+            borderRadius: 'var(--kiz-radius)',
+            border: '1px solid var(--kiz-border)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.35rem',
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontSize: '0.68rem',
+              color: 'var(--kiz-text-muted)',
+            }}>
+              <span>⚡ Acción Rápida Móvil:</span>
+              {actionFeedback && (
+                <span style={{
+                  color: actionFeedback.startsWith('✓') ? 'var(--kiz-success)' : 'var(--kiz-danger)',
+                  fontWeight: 700,
+                  fontSize: '0.68rem',
+                }}>
+                  {actionFeedback}
+                </span>
+              )}
+            </div>
+
+            <button
+              onClick={handleExecute1TapAction}
+              disabled={isProcessingAction}
+              className="kiz-btn"
+              style={{
+                width: '100%',
+                backgroundColor: actionUi.bg,
+                color: '#ffffff',
+                border: 'none',
+                fontWeight: 700,
+                fontSize: '0.8rem',
+                padding: '0.45rem 0.75rem',
+                borderRadius: 'var(--kiz-radius)',
+                cursor: isProcessingAction ? 'wait' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.4rem',
+                boxShadow: 'var(--kiz-shadow-xs)',
+              }}
+              aria-label={actionUi.label}
+            >
+              {isProcessingAction ? '⏳ Procesando...' : actionUi.label}
+            </button>
+          </div>
+        )}
+
+        {/* Footer de Tarjeta con Límite y Botón de Apertura */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           borderTop: '1px solid var(--kiz-border-subtle)',
           paddingTop: '0.65rem',
-          fontSize: '0.72rem'
+          fontSize: '0.72rem',
+          gap: '0.5rem',
         }}>
           <span style={{ color: 'var(--kiz-text-subtle)' }}>
             📅 Límite: <strong>{initiative.deadlineDate}</strong>

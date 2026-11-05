@@ -11,6 +11,9 @@ import { WorkspaceModal } from './components/WorkspaceModal.tsx';
 import { NewInitiativeModal } from './components/NewInitiativeModal.tsx';
 import { ReportsModule } from './components/ReportsModule.tsx';
 import { DatabaseSimulator } from './components/DatabaseSimulator.tsx';
+import { useViewport } from './hooks/useViewport.ts';
+import { MobileBottomNav } from './components/MobileBottomNav.tsx';
+import { MobileRoleSheet } from './components/MobileRoleSheet.tsx';
 
 const DEFAULT_FILTERS: FilterState = {
   searchQuery: '',
@@ -44,6 +47,35 @@ export const App: React.FC = () => {
   const [activeWorkspaceInit, setActiveWorkspaceInit] = useState<Initiative | null>(null);
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isRoleSheetOpen, setIsRoleSheetOpen] = useState(false);
+
+  // Hook reactivo de viewport
+  const { isMobile } = useViewport();
+
+  // Conteo de iniciativas pendientes por rol para el badge móvil
+  const pendingCount = useMemo(() => {
+    if (!currentUser) return 0;
+    switch (currentUser.role) {
+      case 'PARTICIPANT':
+        return initiatives.filter((i) => i.state === 'BORRADOR' || i.state === 'DEVUELTA_PARA_AJUSTES').length;
+      case 'MENTOR':
+        return initiatives.filter((i) =>
+          i.state === 'PENDIENTE_PLAN_IMPLEMENTACION' ||
+          i.state === 'PENDIENTE_RESULTADOS' ||
+          i.state === 'POR_EVALUAR'
+        ).length;
+      case 'COORDINATOR':
+        return initiatives.filter((i) =>
+          i.state === 'POR_APROBAR' ||
+          i.state === 'PENDIENTE_ASIGNACION_MENTOR' ||
+          i.isStagnant
+        ).length;
+      case 'CONSULTANT':
+        return initiatives.filter((i) => i.state === 'POR_APROBAR' || i.state === 'DEVUELTA_PARA_AJUSTES').length;
+      default:
+        return 0;
+    }
+  }, [currentUser, initiatives]);
 
   // Filtros del Catálogo
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
@@ -54,6 +86,7 @@ export const App: React.FC = () => {
     title: string;
     message: string;
   } | null>(null);
+
 
   // Carga inicial y sincronización con el usuario actual
   useEffect(() => {
@@ -172,6 +205,7 @@ export const App: React.FC = () => {
         onNavigate={(view) => setActiveView(view)}
         onOpenNewModal={() => setIsNewModalOpen(true)}
         onOpenLoginModal={() => setIsLoginModalOpen(true)}
+        onOpenRoleSheet={() => setIsRoleSheetOpen(true)}
         onSwitchUser={(user) => {
           setCurrentUser(user);
           setGlobalAlert({
@@ -186,6 +220,7 @@ export const App: React.FC = () => {
           setIsLoginModalOpen(true);
         }}
       />
+
 
       {/* Contenido Principal */}
       <main id="main-content" className="kiz-container" style={{ flex: 1, paddingBottom: '3rem' }}>
@@ -218,7 +253,10 @@ export const App: React.FC = () => {
                 currentUser={currentUser}
                 initiatives={initiatives}
                 onOpenWorkspace={handleOpenWorkspace}
+                onOpenNewInitiative={() => setIsNewModalOpen(true)}
+                onInitiativeUpdated={refreshInitiatives}
                 onNavigateToTab={(v) => setActiveView(v)}
+                onNavigateTab={(v) => setActiveView(v === 'dashboard' ? 'catalog' : v)}
               />
             )}
 
@@ -260,6 +298,8 @@ export const App: React.FC = () => {
                       <InitiativeCard
                         key={init.id}
                         initiative={init}
+                        currentUser={currentUser}
+                        onQuickActionUpdated={refreshInitiatives}
                         onOpenWorkspace={handleOpenWorkspace}
                       />
                     ))}
@@ -385,6 +425,36 @@ export const App: React.FC = () => {
           });
         }}
       />
+
+      {/* Barra Inferior Móvil Fija (Thumb-Zone) */}
+      {currentUser && isMobile && (
+        <MobileBottomNav
+          currentUser={currentUser}
+          activeView={activeView}
+          onNavigate={(view) => setActiveView(view)}
+          pendingCount={pendingCount}
+          onOpenNewInitiative={() => setIsNewModalOpen(true)}
+          onOpenRoleSheet={() => setIsRoleSheetOpen(true)}
+        />
+      )}
+
+      {/* Bottom Sheet Móvil de Selección Rápida de Rol */}
+      <MobileRoleSheet
+        isOpen={isRoleSheetOpen}
+        currentUser={currentUser}
+        onClose={() => setIsRoleSheetOpen(false)}
+        onSelectUser={(user) => {
+          setCurrentUser(user);
+          setGlobalAlert({
+            type: 'info',
+            title: 'Perfil Cambiado',
+            message: `Operando como ${user.name} (${user.role}) en ${user.tenantName}.`
+          });
+        }}
+        onOpenLoginModal={() => setIsLoginModalOpen(true)}
+        onNavigateToDatabase={() => setActiveView('database')}
+      />
     </div>
   );
 };
+

@@ -1,12 +1,13 @@
 # Plan Maestro de Pruebas Automatizadas (SBD / BDD & TDD) — Kizukai Project Hub MVP
 
-> **Estado del Ciclo TDD:** 🔴 **FASE ROJA VERIFICADA**  
+> **Estado del Ciclo TDD:** 🟢 **FASE VERDE VERIFICADA (CORE + MOBILE WEB APP UX)**  
 > **Fecha de Ejecución:** `2026-11-05`  
 > **Responsable:** `qa-tdd-engineer` (Gemini 4 Argon)  
 > **Artefactos del Pool de Pruebas:**
 > - Especificación Gherkin (SBD): [`tests/features/kizukai_mvp.feature`](../tests/features/kizukai_mvp.feature)
-> - Suite Python (`pytest`): [`tests/test_kizukai_tdd.py`](../tests/test_kizukai_tdd.py)
-> - Suite Espejo TypeScript (`Vitest`): [`tests/kizukai.spec.ts`](../tests/kizukai.spec.ts)
+> - Suite Python (`pytest`): [`tests/test_kizukai_tdd.py`](../tests/test_kizukai_tdd.py) (`24 passed`)
+> - Suite Espejo TypeScript (`Vitest`): [`tests/kizukai.spec.ts`](../tests/kizukai.spec.ts) (`20 passed`)
+> - Suite Mobile Web App UX (`Vitest`): [`tests/mobile_ux.test.ts`](../tests/mobile_ux.test.ts) (`11 passed`)
 
 ---
 
@@ -44,45 +45,52 @@
 
 ---
 
-## 3. Evidencia Real de Ejecución en Fase Roja (TDD Red Phase)
+## 3. Especificación Mobile Web App por Rol (`CA-MOB-01` a `CA-MOB-05`)
 
-Comando ejecutado en el workspace `c:\Users\Miguel Gonzalez\Downloads\Kizukai`:
+Módulo de dominio probado: [`src/domain/mobileUxEngine.ts`](../src/domain/mobileUxEngine.ts) y [`kizukai_py/engine.py`](../kizukai_py/engine.py).
 
-```powershell
-& "C:\Users\Miguel Gonzalez\AppData\Local\Python\bin\pytest.exe" tests/test_kizukai_tdd.py
+| Criterio SBD | Test Vitest (`tests/mobile_ux.test.ts`) | Test Pytest (`tests/test_kizukai_tdd.py`) | Regla y Contrato Determinista Verificado |
+| :--- | :--- | :--- | :--- |
+| **`CA-MOB-01`** | `TC-MOB-001`, `TC-MOB-002`, `TC-MOB-003` | `test_ca_mob_01_viewport_classification_and_desktop_intangibility` | `classifyViewport(width)`: `< 768` (`MOBILE`), `768..1023` (`TABLET`), `>= 1024` (`DESKTOP`). En `DESKTOP`, `showBottomNav=false, useBottomSheetModals=false, useCardTables=false` (intangibilidad del diseño de escritorio). |
+| **`CA-MOB-02`** | `TC-MOB-004` | `test_ca_mob_02_role_profiles_for_all_5_roles` | `getMobileRoleProfile(role)`: Configura los 5 modos móviles (`Modo Gemba Express`, `Modo Gemba Walk & 5S`, `Modo Triage & Asignación`, `Modo Pulso Ejecutivo`, `Modo Pocket Control & RBAC`). |
+| **`CA-MOB-03`** | `TC-MOB-005`, `TC-MOB-006`, `TC-MOB-007` | `test_ca_mob_03_mobile_wizard_3_steps_validation` | `validateMobileWizardStep(step, payload)`: Wizard móvil de 3 pasos para iniciativas K2 sin saturar al operador en Gemba, exigiendo `zero_investment_verified = true` en el Paso 3 salvo borrador (`asDraft = true`). |
+| **`CA-MOB-04`** | `TC-MOB-008`, `TC-MOB-009`, `TC-MOB-010` | `test_ca_mob_04_and_05_mobile_quick_actions_and_rbac_enforcement` | `getMobileQuickActionForInitiative(role, state)`: Acciones de 1 toque en tarjeta móvil / Sticky Thumb-Zone (`REMITIR_CORRECCION_RAPIDA`, `APROBAR_FILTRO_1TAP`, `ASIGNAR_MENTOR_RAPIDO`, `VALIDAR_PLAN_RAPIDO`, `FIRMAR_5S_Y_APROBAR_K3`). |
+| **`CA-MOB-05`** | `TC-MOB-007`, `TC-MOB-011` | `test_ca_mob_04_and_05_mobile_quick_actions_and_rbac_enforcement` | Paridad de invariantes Kizukai en móvil y bloqueo estricto de `TECH_ADMIN` (`NINGUNA_ACCION_OPERATIVA`, `isAvailable = false`). |
+
+---
+
+## 4. Evidencia Real de Ejecución en Fase Roja y Fase Verde
+
+### 4.1 Fase Roja Inicial (Pre-implementación)
+```text
+tests\test_kizukai_tdd.py:11: in <module>
+    from kizukai_py.engine import (
+E   ModuleNotFoundError: No module named 'kizukai_py'
+============================== 1 error in 0.68s ===============================
 ```
 
-Salida real capturada (Código de salida `1` — **Fase Roja Confirmada** por ausencia del módulo de producción `kizukai_py.engine` antes de la implementación de `senior-developer`):
-
+### 4.2 Fase Verde Verificada (`pytest` — 24/24 Passed)
 ```text
 ============================= test session starts =============================
 platform win32 -- Python 3.14.5, pytest-8.4.2, pluggy-1.6.0
 rootdir: C:\Users\Miguel Gonzalez\Downloads\Kizukai
-plugins: anyio-4.13.0, asyncio-1.4.0
-asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
-collected 0 items / 1 error
+configfile: pytest.ini
+collected 24 items
 
-=================================== ERRORS ====================================
-_________________ ERROR collecting tests/test_kizukai_tdd.py __________________
-ImportError while importing test module 'C:\Users\Miguel Gonzalez\Downloads\Kizukai\tests\test_kizukai_tdd.py'.
-Hint: make sure your test modules/packages have valid Python names.
-Traceback:
-..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\importlib\__init__.py:88: in import_module
-    return _bootstrap._gcd_import(name[level:], package, level)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-tests\test_kizukai_tdd.py:11: in <module>
-    from kizukai_py.engine import (
-E   ModuleNotFoundError: No module named 'kizukai_py'
-=========================== short test summary info ===========================
-ERROR tests/test_kizukai_tdd.py
-!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
-============================== 1 error in 0.68s ===============================
+tests\test_kizukai_tdd.py ........................                       [100%]
+
+============================= 24 passed in 0.62s ==============================
 ```
 
----
+### 4.3 Fase Verde Verificada (`Vitest` — 31/31 Passed: 20 Core + 11 Mobile UX)
+```text
+ RUN  v2.1.8 C:/Users/Miguel Gonzalez/Downloads/Kizukai
 
-## 4. Criterios de Salida (Handoff a `senior-developer`)
+ ✓ tests/mobile_ux.test.ts (11 tests) 22ms
+ ✓ tests/kizukai.spec.ts (20 tests) 101ms
 
-Para declarar **Fase Verde (TDD Green Phase)**, el agente `senior-developer` deberá implementar:
-1. El paquete Python `kizukai_py/engine.py` satisfaciendo las 20 pruebas de `tests/test_kizukai_tdd.py` (`20 passed`).
-2. El motor TypeScript `src/domain/engine.ts` y cliente SDK `src/sdk/client.ts` satisfaciendo las 20 pruebas espejo de `tests/kizukai.spec.ts` en Vitest.
+ Test Files  2 passed (2)
+      Tests  31 passed (31)
+```
+
+

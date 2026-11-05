@@ -46,3 +46,32 @@
 - **Reporte B (Estadísticas de Iniciativas vs. Metas de Cohorte):** Columnas: Empresa Cliente, Programa/Cohorte, Departamento/Área, Cantidad de Participantes Activos, Meta Comprometida de Iniciativas, Iniciativas Registradas Reales, Porcentaje de Avance vs Meta, Iniciativas en Tiempo, Iniciativas con Retraso (> 8 semanas), Total de Ahorro Económico Validado (K3).
 - **Reporte C (Iniciativas en Proceso y Seguimiento de Etapas):** Columnas: Consecutivo, Folio de Iniciativa, Título de la Mejora, Nombre del Proponente, Departamento, Sucursal, Situación Deficiente K0 (Resumen), Propuesta Proactiva K2 (Resumen), Beneficio K3 Proyectado, Estado de Negocio Actual, Etapa Metodológica Activa, Nombre del Mentor Asignado, Fecha de Registro, Fecha Límite de Implementación, Días Restantes/Retraso, Directriz Estratégica, Métrica Primaria.
 - **Invariantes de Exportación:** Filtro automático por `organization_id` para `COORDINATOR` (extracción multiempresa exclusiva para `CONSULTANT` y `TECH_ADMIN`), generación en `< 3.0 segundos` (hasta 5,000 registros en Reporte C) e inclusión obligatoria de metadatos de auditoría (marca de tiempo UTC, nombre del usuario solicitante y total de registros procesados).
+
+## 6. Especificación Mobile Web App por Rol (`CA-MOB-01` a `CA-MOB-05`)
+
+La arquitectura **Mobile-First Web App / PWA** de Kizukai adapta la ergonomía táctil (*Thumb-Zone*) y simplifica los flujos por rol en dispositivos móviles y tablets sin alterar la experiencia de escritorio:
+
+- **`CA-MOB-01` (Intangibilidad de Escritorio y Cortes Deterministas de Viewport):**
+  - `width < 768px` $\rightarrow$ `MOBILE` (`showBottomNav: true`, `useBottomSheetModals: true`, `useCardTables: true`).
+  - `768px <= width <= 1023px` $\rightarrow$ `TABLET` (`showBottomNav: true`, `useBottomSheetModals: true`, `useCardTables: true`).
+  - `width >= 1024px` $\rightarrow$ `DESKTOP` (`showBottomNav: false`, `useBottomSheetModals: false`, `useCardTables: false`), preservando intactos el Sidebar fijo, Topbar y tablas densas de escritorio.
+- **`CA-MOB-02` (Divulgación Progresiva por Rol — 5 Modos Móviles Dedicados):**
+  - `PARTICIPANT`: **"Modo Gemba Express"** — CTA `+ Nueva Idea K2 (3 Pasos)`, píldoras rápidas de ajuste e implementación.
+  - `MENTOR`: **"Modo Gemba Walk & 5S"** — CTA `Evaluar Entregable / 5S`, píldoras de evaluación K3 y planes $\le 8$ semanas.
+  - `COORDINATOR`: **"Modo Triage & Asignación"** — CTA `Triage de Bandeja`, aprobación de filtro técnico de 1 toque y asignación rápida de mentor.
+  - `CONSULTANT`: **"Modo Pulso Ejecutivo"** — CTA `Exportar Sabana C (.xlsx)`, lectura ejecutiva multiempresa y mejores prácticas K3.
+  - `TECH_ADMIN`: **"Modo Pocket Control & RBAC"** — CTA `Verificar Estado MFA & Tenants`, `allowQuickCardActions = false` (bloqueado de contenido funcional).
+- **`CA-MOB-03` (Wizard Móvil de 3 Pasos para Captura K2 en Gemba):**
+  - Divide el formulario en 3 pasos secuenciales validados (`validateMobileWizardStep(step, payload)`):
+    1. *Identificación en Gemba:* Título ($\ge 5$ caracteres), Departamento y Directriz estratégica.
+    2. *Diagnóstico K0/K1 y Propuesta K2:* Situación deficiente K0 ($\ge 10$ caracteres), Condición básica K1 ($\ge 5$ caracteres) y Proactividad K2 ($\ge 10$ caracteres).
+    3. *Impacto K3 y Declaración Cero Inversión:* Beneficio esperado K3 ($\ge 5$ caracteres) y check obligatorio `zero_investment_verified = true` para envío formal (permitiendo guardar borrador con `asDraft = true`).
+- **`CA-MOB-04` (Acciones Rápidas de 1 Toque en Tarjeta Móvil y Sticky Thumb-Zone Bar):**
+  - `PARTICIPANT` en `DEVUELTA_PARA_AJUSTES` $\rightarrow$ `REMITIR_CORRECCION_RAPIDA` (con Bottom Sheet de confirmación).
+  - `COORDINATOR` en `POR_APROBAR` $\rightarrow$ `APROBAR_FILTRO_1TAP`.
+  - `COORDINATOR` en `PENDIENTE_ASIGNACION_MENTOR` $\rightarrow$ `ASIGNAR_MENTOR_RAPIDO`.
+  - `MENTOR` en `PENDIENTE_PLAN_IMPLEMENTACION` $\rightarrow$ `VALIDAR_PLAN_RAPIDO`.
+  - `MENTOR` en `POR_EVALUAR` $\rightarrow$ `FIRMAR_5S_Y_APROBAR_K3`.
+- **`CA-MOB-05` (Paridad de Invariantes y Gobernanza RBAC en Móvil):**
+  - Todas las acciones rápidas móviles respetan las invariantes del motor de dominio (Cero Inversión, ventana de 8 semanas / 56 días, comentario mínimo de 20 caracteres en devolución, checklist Gemba 5S y bloqueo total de acciones operativas para `TECH_ADMIN` con `NINGUNA_ACCION_OPERATIVA`).
+
