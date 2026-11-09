@@ -814,8 +814,9 @@ h4 { font-size: 1rem; }
     bottom: 0;
     left: 0;
     right: 0;
-    height: calc(64px + env(safe-area-inset-bottom, 0px));
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    min-height: 64px;
+    height: auto;
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
     background-color: #ffffff;
     border-top: 1px solid var(--kiz-border);
     box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.08);
@@ -833,7 +834,7 @@ h4 { font-size: 1rem; }
     border: none;
     cursor: pointer;
     color: var(--kiz-text-subtle);
-    font-size: 0.68rem;
+    font-size: 0.75rem;
     font-weight: 600;
     gap: 2px;
     padding: 0.25rem 0;

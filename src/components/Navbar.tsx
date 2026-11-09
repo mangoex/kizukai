@@ -343,9 +343,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onClick={onOpenNewModal}
                   className="kiz-btn kiz-btn-accent kiz-btn-sm"
                   aria-label="Registrar nueva iniciativa K2"
-                  style={{ fontWeight: 700 }}
+                  style={{
+                    fontWeight: 700,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.35rem',
+                  }}
                 >
-                  <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>+</span> Registrar K2
+                  <span style={{ fontSize: '1.1rem', lineHeight: 1, display: 'inline-flex', alignItems: 'center' }}>+</span>
+                  <span>Registrar idea K2</span>
                 </button>
               )}
 

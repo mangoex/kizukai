@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Initiative, User } from '../types/index.ts';
-import { getMobileQuickActionForInitiative, MobileQuickActionCode } from '../domain/mobileUxEngine.ts';
+import { getMobileQuickActionForInitiative, MobileQuickActionCode, formatStagnantBadge } from '../domain/mobileUxEngine.ts';
 import { StorageService } from '../services/storageService.ts';
 
 interface InitiativeCardProps {
@@ -52,7 +52,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
         };
       case 'ASIGNAR_MENTOR_RAPIDO':
         return {
-          label: '🧑‍🏫 Asignar a Carlos M.',
+          label: 'Asignar mentor',
           bg: '#2563eb',
           hoverBg: '#1d4ed8',
         };
@@ -122,14 +122,9 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
         transitionAction = 'APROBAR_FILTRO_TECNICO';
         break;
       case 'ASIGNAR_MENTOR_RAPIDO':
-        transitionAction = 'ASIGNAR_MENTOR';
-        payloadData = {
-          user: currentUser,
-          mentorId: 'usr-002-carlos',
-          mentorName: 'Carlos Mendoza',
-          justification: 'Asignación ágil en 1 toque desde bandeja móvil',
-        };
-        break;
+        onOpenWorkspace(initiative);
+        setIsProcessingAction(false);
+        return;
       case 'VALIDAR_PLAN_RAPIDO':
         transitionAction = 'VALIDAR_PLAN';
         payloadData = {
@@ -206,7 +201,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
         position: 'relative',
       }}
     >
-      {/* Alerta de Estancamiento (> 7 días) */}
+      {/* Alerta de Estancamiento (+7 días) */}
       {initiative.isStagnant && (
         <div style={{
           position: 'absolute',
@@ -224,7 +219,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
           gap: '0.25rem',
           zIndex: 2,
         }}>
-          <span>⏱️</span> Estancada (&gt; 7 días)
+          <span>⏱</span> {formatStagnantBadge(8)}
         </div>
       )}
 
@@ -313,7 +308,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
           borderLeft: '3px solid var(--kiz-accent)',
         }}>
           <div style={{ fontWeight: 600, color: 'var(--kiz-text)', marginBottom: '0.2rem' }}>
-            K2 Proactividad:
+            Idea K2:
           </div>
           <p style={{
             display: '-webkit-box',

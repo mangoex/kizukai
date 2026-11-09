@@ -34,6 +34,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       className="kiz-bottom-nav"
       aria-label="Navegación móvil inferior (Thumb-Zone)"
       role="navigation"
+      style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0px))' }}
     >
       {/* 1. Mi Rol / Bandejas */}
       <button

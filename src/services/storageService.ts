@@ -754,21 +754,38 @@ export class StorageService {
     return { success: true, department: newDept };
   }
 
-  public static getGuidelines(): any[] {
+  public static getGuidelines(tenantId?: string): any[] {
     const raw = localStorage.getItem(STORAGE_KEYS.GUIDELINES);
     if (!raw) {
       const initialGuidelines = [
-        { code: 'CALIDAD', letter: 'Q', name: 'Calidad (Quality)', description: 'Cero defectos, reducción de scrap y control de variabilidad en Gemba.' },
-        { code: 'COSTO', letter: 'C', name: 'Costo (Cost)', description: 'Ahorro de recursos, energía y materiales con CERO INVERSIÓN de capital ($0 Capex).' },
-        { code: 'ENTREGA', letter: 'D', name: 'Entrega (Delivery)', description: 'Reducción de tiempos de ciclo, cambios rápidos de formato (SMED) y flujo continuo.' },
-        { code: 'SEGURIDAD', letter: 'S', name: 'Seguridad (Safety)', description: 'Ergonomía en estaciones de trabajo, eliminación de condiciones inseguras y cero accidentes.' },
-        { code: 'MORAL', letter: 'M', name: 'Moral (Morale / 5S)', description: 'Ambiente laboral digno, orden visual, estandarización y cultura de autodisciplina 5S.' }
+        { code: 'CALIDAD', letter: 'Q', name: 'Calidad (Quality)', description: 'Cero defectos, reducción de scrap y control de variabilidad en Gemba.', tenantId: 'ORG-A' },
+        { code: 'COSTO', letter: 'C', name: 'Costo (Cost)', description: 'Ahorro de recursos, energía y materiales con CERO INVERSIÓN de capital ($0 Capex).', tenantId: 'ORG-A' },
+        { code: 'ENTREGA', letter: 'D', name: 'Entrega (Delivery)', description: 'Reducción de tiempos de ciclo, cambios rápidos de formato (SMED) y flujo continuo.', tenantId: 'ORG-A' },
+        { code: 'SEGURIDAD', letter: 'S', name: 'Seguridad (Safety)', description: 'Ergonomía en estaciones de trabajo, eliminación de condiciones inseguras y cero accidentes.', tenantId: 'ORG-A' },
+        { code: 'MORAL', letter: 'M', name: 'Moral (Morale / 5S)', description: 'Ambiente laboral digno, orden visual, estandarización y cultura de autodisciplina 5S.', tenantId: 'ORG-A' },
+        { code: 'CALIDAD_B', letter: 'Q', name: 'Calidad e Inocuidad', description: 'Cumplimiento HACCP y cero defectos en envasado aséptico.', tenantId: 'ORG-B' },
+        { code: 'COSTO_B', letter: 'C', name: 'Eficiencia y Rendimiento', description: 'Reducción de mermas y optimización de insumos sin inversión de capital.', tenantId: 'ORG-B' },
+        { code: 'ENTREGA_B', letter: 'D', name: 'Cumplimiento de Embarques', description: 'Tiempos de entrega a cedis y cumplimiento de nivel de servicio OTIF.', tenantId: 'ORG-B' },
+        { code: 'SEGURIDAD_B', letter: 'S', name: 'Seguridad Operacional', description: 'Cero accidentes e incidentes en líneas de envasado.', tenantId: 'ORG-B' },
+        { code: 'MORAL_B', letter: 'M', name: 'Cultura 5S y Disciplina', description: 'Estandarización visual, orden y disciplina en áreas operativas.', tenantId: 'ORG-B' }
       ];
       localStorage.setItem(STORAGE_KEYS.GUIDELINES, JSON.stringify(initialGuidelines));
+      if (tenantId) {
+        return initialGuidelines.filter((g: any) => g.tenantId === tenantId);
+      }
       return initialGuidelines;
     }
+
     try {
-      return JSON.parse(raw);
+      const parsed: any[] = JSON.parse(raw);
+      const normalized = parsed.map((g: any) => ({
+        ...g,
+        tenantId: g.tenantId || 'ORG-A'
+      }));
+      if (tenantId) {
+        return normalized.filter((g: any) => g.tenantId === tenantId);
+      }
+      return normalized;
     } catch {
       return [];
     }
@@ -776,7 +793,7 @@ export class StorageService {
 
   public static createGuideline(
     actor: User,
-    data: { code: string; letter: string; name: string; description: string }
+    data: { code: string; letter: string; name: string; description: string; tenantId?: string }
   ): { success: boolean; guideline?: any; error?: string } {
     if (actor.role !== 'TECH_ADMIN' && actor.role !== 'CONSULTANT') {
       return { success: false, error: '403 Forbidden: Solo el Administrador Técnico o Consultor pueden agregar directrices estratégicas.' };
@@ -786,17 +803,35 @@ export class StorageService {
       return { success: false, error: 'El código y nombre de la directriz son obligatorios.' };
     }
 
-    const list = this.getGuidelines();
+    const assignedTenantId = data.tenantId || actor.tenantId || 'ORG-A';
+
+    if (actor.role === 'TECH_ADMIN' && actor.tenantId && data.tenantId && actor.tenantId !== data.tenantId) {
+      return { success: false, error: 'Violación de aislamiento multi-tenant: 403 Forbidden' };
+    }
+
+    const raw = localStorage.getItem(STORAGE_KEYS.GUIDELINES);
+    let list: any[] = [];
+    if (!raw) {
+      list = this.getGuidelines();
+    } else {
+      try {
+        list = JSON.parse(raw);
+      } catch {
+        list = [];
+      }
+    }
+
     const upperCode = data.code.trim().toUpperCase();
-    if (list.some((g: any) => g.code === upperCode)) {
-      return { success: false, error: `Ya existe una directriz con el código ${upperCode}.` };
+    if (list.some((g: any) => g.code === upperCode && (g.tenantId || 'ORG-A') === assignedTenantId)) {
+      return { success: false, error: `Ya existe una directriz con el código ${upperCode} para el tenant ${assignedTenantId}.` };
     }
 
     const newGuideline = {
       code: upperCode,
-      letter: data.letter.trim().toUpperCase() || upperCode[0],
+      letter: data.letter?.trim().toUpperCase() || upperCode[0],
       name: data.name.trim(),
-      description: data.description?.trim() || ''
+      description: data.description?.trim() || '',
+      tenantId: assignedTenantId
     };
 
     list.push(newGuideline);
@@ -807,11 +842,116 @@ export class StorageService {
       entityId: upperCode,
       action: 'STRATEGIC_GUIDELINE_CREATED',
       performedBy: actor.email,
-      tenantId: 'ORG-GLOBAL',
+      tenantId: assignedTenantId,
       payloadSnapshot: newGuideline
     });
 
     return { success: true, guideline: newGuideline };
+  }
+
+  public static updateGuideline(
+    actor: User,
+    code: string,
+    data: { name?: string; description?: string; letter?: string; [key: string]: any }
+  ): { success: boolean; guideline?: any; error?: string } {
+    if (actor.role !== 'TECH_ADMIN' && actor.role !== 'CONSULTANT') {
+      return { success: false, error: '403 Forbidden: No autorizado para modificar directrices.' };
+    }
+
+    const raw = localStorage.getItem(STORAGE_KEYS.GUIDELINES);
+    let list: any[] = [];
+    if (!raw) {
+      list = this.getGuidelines();
+    } else {
+      try {
+        list = JSON.parse(raw);
+      } catch {
+        list = [];
+      }
+    }
+
+    const upperCode = code.trim().toUpperCase();
+    const idx = list.findIndex((g: any) => g.code === upperCode);
+    if (idx === -1) {
+      return { success: false, error: `Directriz ${upperCode} no encontrada.` };
+    }
+
+    const existing = list[idx];
+    const guidelineTenant = existing.tenantId || 'ORG-A';
+
+    if (actor.role === 'TECH_ADMIN' && actor.tenantId && actor.tenantId !== guidelineTenant) {
+      return { success: false, error: 'Violación de aislamiento multi-tenant: 403 Forbidden' };
+    }
+
+    const updated = {
+      ...existing,
+      tenantId: guidelineTenant,
+      name: data.name !== undefined ? data.name.trim() : existing.name,
+      description: data.description !== undefined ? data.description.trim() : existing.description,
+      letter: data.letter !== undefined ? data.letter.trim().toUpperCase() : existing.letter
+    };
+
+    list[idx] = updated;
+    localStorage.setItem(STORAGE_KEYS.GUIDELINES, JSON.stringify(list));
+
+    this.logAudit({
+      entity: 'catalogs',
+      entityId: upperCode,
+      action: 'STRATEGIC_GUIDELINE_UPDATED',
+      performedBy: actor.email,
+      tenantId: guidelineTenant,
+      payloadSnapshot: updated
+    });
+
+    return { success: true, guideline: updated };
+  }
+
+  public static deleteGuideline(
+    actor: User,
+    code: string
+  ): { success: boolean; error?: string } {
+    if (actor.role !== 'TECH_ADMIN' && actor.role !== 'CONSULTANT') {
+      return { success: false, error: '403 Forbidden: No autorizado para eliminar directrices.' };
+    }
+
+    const raw = localStorage.getItem(STORAGE_KEYS.GUIDELINES);
+    let list: any[] = [];
+    if (!raw) {
+      list = this.getGuidelines();
+    } else {
+      try {
+        list = JSON.parse(raw);
+      } catch {
+        list = [];
+      }
+    }
+
+    const upperCode = code.trim().toUpperCase();
+    const idx = list.findIndex((g: any) => g.code === upperCode);
+    if (idx === -1) {
+      return { success: false, error: `Directriz ${upperCode} no encontrada.` };
+    }
+
+    const existing = list[idx];
+    const guidelineTenant = existing.tenantId || 'ORG-A';
+
+    if (actor.role === 'TECH_ADMIN' && actor.tenantId && actor.tenantId !== guidelineTenant) {
+      return { success: false, error: 'Violación de aislamiento multi-tenant: 403 Forbidden' };
+    }
+
+    list.splice(idx, 1);
+    localStorage.setItem(STORAGE_KEYS.GUIDELINES, JSON.stringify(list));
+
+    this.logAudit({
+      entity: 'catalogs',
+      entityId: upperCode,
+      action: 'STRATEGIC_GUIDELINE_DELETED',
+      performedBy: actor.email,
+      tenantId: guidelineTenant,
+      payloadSnapshot: existing
+    });
+
+    return { success: true };
   }
 
   public static getUsers(): User[] {

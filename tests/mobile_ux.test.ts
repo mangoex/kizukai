@@ -61,7 +61,7 @@ describe("Mobile Web App UX Engine — Especificación SBD CA-MOB-01 a CA-MOB-05
     expect(mentor.modeTitle).toBe("Modo Gemba Walk & 5S");
     expect(mentor.quickPills.length).toBeGreaterThanOrEqual(3);
 
-    expect(coordinator.modeTitle).toBe("Modo Triage & Asignación");
+    expect(coordinator.modeTitle).toBe("Modo Revisión & Asignación");
     expect(coordinator.allowQuickCardActions).toBe(true);
 
     expect(consultant.modeTitle).toBe("Modo Pulso Ejecutivo");

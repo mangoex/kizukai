@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Initiative, User } from '../types/index.ts';
 import { InitiativeCard } from './InitiativeCard.tsx';
-import { getMobileRoleProfile } from '../domain/mobileUxEngine.ts';
+import { getMobileRoleProfile, COORDINATOR_QUEUES } from '../domain/mobileUxEngine.ts';
 
 interface RoleQueuesProps {
   currentUser: User;
@@ -164,36 +164,34 @@ export const RoleQueues: React.FC<RoleQueuesProps> = ({
     const stagnant = scopedInitiatives.filter((i) => i.isStagnant);
     const cohortGoal = scopedInitiatives.filter((i) => i.state !== 'RECHAZADA' && i.state !== 'CANCELADA');
 
-    subgroups = [
-      {
-        id: 'forApproval',
-        label: `Filtro Técnico (${forApproval.length})`,
-        icon: '💡',
-        items: forApproval,
-        description: 'Iniciativas recién enviadas que requieren validación de Cero Inversión y alineación QCDSM.',
-      },
-      {
-        id: 'needMentor',
-        label: `Sin Mentor (${needMentor.length})`,
-        icon: '🧑‍🏫',
-        items: needMentor,
-        description: 'Iniciativas aprobadas técnicamente que esperan asignación de mentor experto.',
-      },
-      {
-        id: 'stagnant',
-        label: `Estancadas (> 7d) (${stagnant.length})`,
-        icon: '⚠️',
-        items: stagnant,
-        description: 'Proyectos de la cohorte detenidos que requieren intervención de la coordinación.',
-      },
-      {
-        id: 'cohortGoal',
-        label: `Cohorte 2026 (${cohortGoal.length})`,
-        icon: '🎯',
-        items: cohortGoal,
-        description: 'Avance global contra la meta de la cohorte (Meta: 15 iniciativas estandarizadas).',
-      },
-    ];
+    const counts: Record<string, number> = {
+      pendingTechnicalReview: forApproval.length,
+      pendingMentorAssignment: needMentor.length,
+      stagnantOver7Days: stagnant.length,
+      group2026: cohortGoal.length,
+    };
+
+    const itemsMap: Record<string, Initiative[]> = {
+      pendingTechnicalReview: forApproval,
+      pendingMentorAssignment: needMentor,
+      stagnantOver7Days: stagnant,
+      group2026: cohortGoal,
+    };
+
+    const cleanIcons: Record<string, string> = {
+      pendingTechnicalReview: '✓',
+      pendingMentorAssignment: '◎',
+      stagnantOver7Days: '▲',
+      group2026: '◆',
+    };
+
+    subgroups = COORDINATOR_QUEUES.map((q) => ({
+      id: q.id,
+      label: `${q.label} (${counts[q.id] ?? 0})`,
+      icon: cleanIcons[q.id] || '•',
+      items: itemsMap[q.id] || [],
+      description: q.description,
+    }));
   } else if (role === 'CONSULTANT') {
     const orgA = scopedInitiatives.filter((i) => i.tenantId === 'ORG-A');
     const orgB = scopedInitiatives.filter((i) => i.tenantId === 'ORG-B');
@@ -411,11 +409,11 @@ export const RoleQueues: React.FC<RoleQueuesProps> = ({
               fontWeight: 700,
               color: stagnantCount > 0 ? '#9a3412' : '#1e40af',
             }}>
-              <span>⏱️ Triage Operativo:</span>
-              <span>{stagnantCount > 0 ? `⚠️ ${stagnantCount} estancadas (> 7 días)` : '✓ Cohorte al día'}</span>
+              <span>Revisión y asignación de iniciativas:</span>
+              <span>{stagnantCount > 0 ? `${stagnantCount} estancadas (+7 días)` : 'Grupo al día'}</span>
             </div>
             <p style={{ fontSize: '0.72rem', color: stagnantCount > 0 ? '#7c2d12' : '#1e3a8a', margin: 0 }}>
-              Puedes aprobar el filtro técnico Cero Inversión o asignar mentor directamente con <strong>1 toque</strong> en las tarjetas inferiores.
+              Puedes aprobar el filtro técnico Cero Inversión o asignar mentor directamente en las tarjetas inferiores.
             </p>
           </div>
         )}

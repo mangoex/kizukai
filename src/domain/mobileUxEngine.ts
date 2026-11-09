@@ -153,6 +153,96 @@ export function classifyViewport(width: number): ViewportClassification {
   };
 }
 
+export interface CoordinatorQueue {
+  id: string;
+  label: string;
+  icon: string;
+  description: string;
+}
+
+export const COORDINATOR_QUEUES: CoordinatorQueue[] = [
+  {
+    id: "pendingTechnicalReview",
+    label: "Pendientes de revisión técnica",
+    icon: "clipboard-check",
+    description: "Iniciativas recién enviadas que requieren validación de Cero Inversión y alineación QCDSM.",
+  },
+  {
+    id: "pendingMentorAssignment",
+    label: "Pendientes de asignar mentor",
+    icon: "user-check",
+    description: "Iniciativas aprobadas técnicamente que esperan asignación de mentor experto.",
+  },
+  {
+    id: "stagnantOver7Days",
+    label: "Sin avances en más de 7 días",
+    icon: "clock-alert",
+    description: "Proyectos del grupo detenidos que requieren intervención de la coordinación.",
+  },
+  {
+    id: "group2026",
+    label: "Grupo 2026",
+    icon: "target",
+    description: "Avance global contra la meta del grupo (Meta: 15 iniciativas estandarizadas).",
+  },
+];
+
+export const WORKSPACE_TABS = [
+  { id: "diagnostic", label: "Diagnóstico y línea base" },
+  { id: "plan", label: "Plan de trabajo" },
+  { id: "evidences", label: "Evidencias" },
+  {
+    id: "observations",
+    label: "Observaciones",
+    requires5SAudit: false,
+    focus: "Retroalimentación formativa y notas de campo",
+  },
+  { id: "history", label: "Bitácora" },
+];
+
+export function validateMentorAssignment(params: {
+  mentorId?: string;
+  confirmed?: boolean;
+}): { valid: boolean; error?: string } {
+  if (!params.mentorId || params.mentorId.trim().length === 0) {
+    return {
+      valid: false,
+      error: "Debes seleccionar un mentor explícitamente antes de confirmar la asignación.",
+    };
+  }
+  if (!params.confirmed) {
+    return {
+      valid: false,
+      error: "Debes confirmar explícitamente la asignación del mentor.",
+    };
+  }
+  return { valid: true };
+}
+
+export function formatStagnantBadge(days: number): string {
+  if (days >= 7) {
+    return "+7 días";
+  }
+  return `${days} días`;
+}
+
+export function validateWorkspaceObservation(params: {
+  authorRole?: string;
+  comment?: string;
+  type?: string;
+  [key: string]: any;
+}): { valid: boolean; checklist5sRequired: boolean; errors?: string[] } {
+  const errors: string[] = [];
+  if (!params.comment || params.comment.trim().length === 0) {
+    errors.push("El comentario u observación no puede estar vacío.");
+  }
+  return {
+    valid: errors.length === 0,
+    checklist5sRequired: false,
+    ...(errors.length > 0 ? { errors } : {}),
+  };
+}
+
 /**
  * CA-MOB-02: Devuelve el perfil de interfaz móvil simplificada según el rol activo.
  */
@@ -195,13 +285,18 @@ export function getMobileRoleProfile(role: MobileUserRole | string): MobileRoleP
     case "COORDINATOR":
       return {
         role: "COORDINATOR",
-        modeTitle: "Modo Triage & Asignación",
-        subtitle: "Filtro técnico Cero Inversión de 1 toque y asignación ágil de mentores",
-        primaryCtaLabel: "Triage de Bandeja",
-        quickPills: ["Filtro Técnico (Por Aprobar)", "Sin Mentor", "Por Documentar POE", "Alerta > 7d"],
+        modeTitle: "Modo Revisión & Asignación",
+        subtitle: "Filtro técnico Cero Inversión y asignación ágil de mentores para el grupo",
+        primaryCtaLabel: "Revisión y asignación de iniciativas",
+        quickPills: [
+          "Pendientes de revisión técnica",
+          "Pendientes de asignar mentor",
+          "Sin avances en más de 7 días",
+          "Grupo 2026",
+        ],
         allowQuickCardActions: true,
         bottomNavItems: [
-          { id: "INBOX", label: "Triage" },
+          { id: "INBOX", label: "Iniciativas" },
           { id: "WORKSPACE", label: "Asignar" },
           { id: "REPORTS", label: "Reportes" },
           { id: "PROFILE", label: "Rol" },
@@ -363,7 +458,7 @@ export function getMobileQuickActionForInitiative(
     if (state === "PENDIENTE_ASIGNACION_MENTOR") {
       return {
         actionCode: "ASIGNAR_MENTOR_RAPIDO",
-        label: "Asignar Mentor en 1 Toque",
+        label: "Asignar mentor",
         requiresConfirmationSheet: true,
         isAvailable: true,
         thumbZonePriority: "PRIMARY",

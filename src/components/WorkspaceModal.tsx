@@ -7,6 +7,7 @@ import {
   Evidence
 } from '../types/index.ts';
 import { StorageService } from '../services/storageService.ts';
+import { WORKSPACE_TABS } from '../domain/mobileUxEngine.ts';
 
 interface WorkspaceModalProps {
   initiative: Initiative;
@@ -23,7 +24,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
 }) => {
   const [initiative, setInitiative] = useState<Initiative>(initialInitiative);
   const [activeTab, setActiveTab] = useState<
-    'diagnostic' | 'plan' | 'evidences' | 'mentorship' | 'history'
+    'diagnostic' | 'plan' | 'evidences' | 'observations' | 'mentorship' | 'history'
   >('diagnostic');
 
   // Estados de formularios para las transiciones
@@ -598,46 +599,20 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
         {/* 5 Pestañas de Contexto Metodológico (PRD Secciones 4 y 5) */}
         <div style={{ padding: '0.5rem 1.5rem 0' }}>
           <nav className="kiz-tabs" aria-label="Pestañas de Contexto Metodológico" role="tablist">
-            <button
-              role="tab"
-              aria-selected={activeTab === 'diagnostic'}
-              onClick={() => setActiveTab('diagnostic')}
-              className="kiz-tab-btn"
-            >
-              <span>1.</span> Diagnóstico & Línea Base (K0&ndash;K3)
-            </button>
-            <button
-              role="tab"
-              aria-selected={activeTab === 'plan'}
-              onClick={() => setActiveTab('plan')}
-              className="kiz-tab-btn"
-            >
-              <span>2.</span> Plan de Trabajo (8 Semanas / 6 Pasos)
-            </button>
-            <button
-              role="tab"
-              aria-selected={activeTab === 'evidences'}
-              onClick={() => setActiveTab('evidences')}
-              className="kiz-tab-btn"
-            >
-              <span>3.</span> Bóveda Evidencias ({initiative.evidences.length})
-            </button>
-            <button
-              role="tab"
-              aria-selected={activeTab === 'mentorship'}
-              onClick={() => setActiveTab('mentorship')}
-              className="kiz-tab-btn"
-            >
-              <span>4.</span> Mentoría & Checklist 5S Gemba
-            </button>
-            <button
-              role="tab"
-              aria-selected={activeTab === 'history'}
-              onClick={() => setActiveTab('history')}
-              className="kiz-tab-btn"
-            >
-              <span>5.</span> Bitácora Inmutable ({initiative.transitionHistory.length})
-            </button>
+            {WORKSPACE_TABS.map((tab) => {
+              const isSelected = activeTab === tab.id || (activeTab === 'mentorship' && tab.id === 'observations');
+              return (
+                <button
+                  key={tab.id}
+                  role="tab"
+                  aria-selected={isSelected}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className="kiz-tab-btn"
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
           </nav>
         </div>
 
@@ -958,97 +933,9 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
             </div>
           )}
 
-          {/* TAB 4: PANEL DE MENTORÍA & CHECKLIST 5S */}
-          {activeTab === 'mentorship' && (
+          {/* TAB 4: OBSERVACIONES Y RETROALIMENTACIÓN FORMATIVA */}
+          {(activeTab === 'observations' || activeTab === 'mentorship') && (
             <div>
-              {/* Sección de Auditoría 5S en Gemba */}
-              <div style={{
-                backgroundColor: 'var(--kiz-surface-subtle)',
-                border: '1px solid var(--kiz-border)',
-                borderRadius: 'var(--kiz-radius-lg)',
-                padding: '1.25rem',
-                marginBottom: '1.5rem'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
-                  <div>
-                    <h3 style={{ fontSize: '1.05rem', color: 'var(--kiz-primary)' }}>
-                      Auditoría 5S de Gemba (Requisito para Aprobación K3)
-                    </h3>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--kiz-text-subtle)' }}>
-                      Evaluación presencial en el lugar de trabajo real.
-                    </p>
-                  </div>
-                  <div style={{
-                    backgroundColor: '#dcfce7',
-                    color: '#14532d',
-                    padding: '0.35rem 0.75rem',
-                    borderRadius: 'var(--kiz-radius-full)',
-                    fontSize: '0.85rem',
-                    fontWeight: 700
-                  }}>
-                    Puntaje 5S: {checklist5s.score} / 100
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.825rem' }}>
-                    <input
-                      type="checkbox"
-                      checked={checklist5s.seiri_clasificar}
-                      onChange={(e) => setChecklist5s({ ...checklist5s, seiri_clasificar: e.target.checked })}
-                    />
-                    <span>1S &middot; Seiri (Clasificar)</span>
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.825rem' }}>
-                    <input
-                      type="checkbox"
-                      checked={checklist5s.seiton_ordenar}
-                      onChange={(e) => setChecklist5s({ ...checklist5s, seiton_ordenar: e.target.checked })}
-                    />
-                    <span>2S &middot; Seiton (Ordenar)</span>
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.825rem' }}>
-                    <input
-                      type="checkbox"
-                      checked={checklist5s.seiso_limpiar}
-                      onChange={(e) => setChecklist5s({ ...checklist5s, seiso_limpiar: e.target.checked })}
-                    />
-                    <span>3S &middot; Seiso (Limpiar)</span>
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.825rem' }}>
-                    <input
-                      type="checkbox"
-                      checked={checklist5s.seiketsu_estandarizar}
-                      onChange={(e) => setChecklist5s({ ...checklist5s, seiketsu_estandarizar: e.target.checked })}
-                    />
-                    <span>4S &middot; Seiketsu (Estandarizar)</span>
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.825rem' }}>
-                    <input
-                      type="checkbox"
-                      checked={checklist5s.shitsuke_disciplina}
-                      onChange={(e) => setChecklist5s({ ...checklist5s, shitsuke_disciplina: e.target.checked })}
-                    />
-                    <span>5S &middot; Shitsuke (Disciplina)</span>
-                  </label>
-                </div>
-
-                <div style={{
-                  padding: '0.65rem 0.85rem',
-                  backgroundColor: '#ffffff',
-                  borderRadius: 'var(--kiz-radius)',
-                  border: '1px solid var(--kiz-border-subtle)',
-                  fontSize: '0.75rem',
-                  color: 'var(--kiz-text-muted)',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}>
-                  <span>Firma Digital Evaluador: <strong>{checklist5s.digitalSignature}</strong></span>
-                  <span>Validado con Contraloría/Finanzas: <strong>{checklist5s.financeValidated ? 'SÍ (Confirmado)' : 'NO'}</strong></span>
-                </div>
-              </div>
-
               {/* Hilo de Retroalimentación de Mentor */}
               <div style={{ marginBottom: '1.25rem' }}>
                 <h3 style={{ fontSize: '1rem', marginBottom: '0.75rem' }}>Hilo de Retroalimentación Formativa</h3>
