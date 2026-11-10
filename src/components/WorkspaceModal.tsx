@@ -160,7 +160,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
           actionTitle: 'Enviar Iniciativa a Revisión Técnica',
           responsibleRole: 'Participante (Proponente)',
           deadline: initiative.deadlineDate,
-          buttonText: '🚀 ENVIAR A REVISIÓN',
+          buttonText: 'ENVIAR A REVISIÓN',
           buttonColor: 'var(--kiz-primary)',
           onExecute: () => handleExecuteAction('ENVIAR_A_REVISION')
         };
@@ -176,13 +176,13 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                 onClick={() => handleExecuteAction('APROBAR_FILTRO_TECNICO', { justification: 'Aprobada por Coordinación.' })}
                 className="kiz-btn kiz-btn-success"
               >
-                ✓ APROBAR FILTRO TÉCNICO
+                APROBAR FILTRO TÉCNICO
               </button>
               <button
                 onClick={() => handleExecuteAction('RECHAZAR_IDEA', { justification: 'No cumple directrices mínimas.' })}
                 className="kiz-btn kiz-btn-danger"
               >
-                ✗ RECHAZAR IDEA
+                RECHAZAR IDEA
               </button>
             </div>
           )
@@ -217,7 +217,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                 }
                 className="kiz-btn kiz-btn-primary"
               >
-                🧑‍🏫 ASIGNAR MENTOR
+                ASIGNAR MENTOR
               </button>
             </div>
           )
@@ -254,7 +254,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                 }
                 className="kiz-btn kiz-btn-success"
               >
-                ✓ VALIDAR PLAN IMPLEMENTACIÓN
+                VALIDAR PLAN IMPLEMENTACIÓN
               </button>
               <button
                 onClick={() =>
@@ -274,7 +274,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
           actionTitle: 'Notificar Término de Tareas de Gemba (100% Ejecutado)',
           responsibleRole: 'Participante (Proponente)',
           deadline: initiative.deadlineDate,
-          buttonText: '🏁 NOTIFICAR TÉRMINO DE OBRA',
+          buttonText: 'NOTIFICAR TÉRMINO DE OBRA',
           buttonColor: 'var(--kiz-primary)',
           onExecute: () => handleExecuteAction('NOTIFICAR_TERMINO_OBRA')
         };
@@ -287,7 +287,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
           renderCustom: () => (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%' }}>
               <div style={{ fontSize: '0.78rem', color: '#9a3412', fontWeight: 600 }}>
-                ⚠️ Iniciativa devuelta. Carga la Versión 2.0 de evidencias para restaurar el estado al flujo regular:
+                Iniciativa devuelta. Carga la Versión 2.0 de evidencias para restaurar el estado al flujo regular:
               </div>
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                 <input
@@ -308,7 +308,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                   }
                   className="kiz-btn kiz-btn-accent"
                 >
-                  📤 REMITIR CORRECCIÓN (SUBIR v2.0)
+                  REMITIR CORRECCIÓN (SUBIR v2.0)
                 </button>
               </div>
             </div>
@@ -326,7 +326,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                 onClick={() => handleExecuteAction('ENVIAR_A_EVALUACION')}
                 className="kiz-btn kiz-btn-primary"
               >
-                📋 ENVIAR A EVALUACIÓN K3
+                ENVIAR A EVALUACIÓN K3
               </button>
               <button
                 onClick={() => setShowDevolutionDialog(true)}
@@ -357,7 +357,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                 }}
                 className="kiz-btn kiz-btn-success"
               >
-                ✍️ FIRMAR AUDITORÍA 5S Y APROBAR K3
+                FIRMAR AUDITORÍA 5S Y APROBAR K3
               </button>
               <button
                 onClick={() => setShowDevolutionDialog(true)}
@@ -393,7 +393,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                 }
                 className="kiz-btn kiz-btn-accent"
               >
-                📜 PUBLICAR ESTÁNDAR POE Y FINALIZAR
+                PUBLICAR ESTÁNDAR POE Y FINALIZAR
               </button>
             </div>
           )
@@ -406,7 +406,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
           isMultiAction: true,
           renderCustom: () => (
             <span style={{ color: 'var(--kiz-success)', fontWeight: 700, fontSize: '0.85rem' }}>
-              ✓ Iniciativa finalizada con éxito. Ahorro registrado: ${initiative.diagnostic.ve_annual_value.toLocaleString()} USD/año sin inversión.
+              Iniciativa finalizada con éxito. Ahorro registrado: ${initiative.diagnostic.ve_annual_value.toLocaleString()} USD/año sin inversión.
             </span>
           )
         };
@@ -469,7 +469,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                   padding: '0.15rem 0.5rem',
                   borderRadius: 'var(--kiz-radius-full)'
                 }}>
-                  ⏱️ Alerta de Estancamiento (&gt;7 días)
+                  Alerta de Estancamiento (&gt;7 días)
                 </span>
               )}
             </div>
@@ -479,10 +479,10 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
             </h1>
 
             <div style={{ fontSize: '0.75rem', color: 'var(--kiz-text-subtle)', marginTop: '0.25rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-              <span>🏢 {initiative.tenantName} &middot; {initiative.department}</span>
-              <span>👤 Proponente: <strong>{initiative.proponentName}</strong></span>
-              <span>🧑‍🏫 Mentor: <strong>{initiative.mentorName || 'Sin asignar'}</strong></span>
-              <span>📅 Ventana Límite: <strong>{initiative.deadlineDate}</strong></span>
+              <span>{initiative.tenantName} &middot; {initiative.department}</span>
+              <span>Proponente: <strong>{initiative.proponentName}</strong></span>
+              <span>Mentor: <strong>{initiative.mentorName || 'Sin asignar'}</strong></span>
+              <span>Ventana Límite: <strong>{initiative.deadlineDate}</strong></span>
             </div>
           </div>
 
@@ -499,7 +499,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
         {/* Banners de Notificación de Acciones */}
         {errorBanner && (
           <div className="kiz-alert kiz-alert-danger" role="alert" style={{ margin: '0.75rem 1.5rem 0' }}>
-            <span>⚠️</span>
+            <span style={{ fontWeight: 700 }}>Alerta:</span>
             <div style={{ flex: 1 }}>{errorBanner}</div>
             <button onClick={clearBanners} className="kiz-btn kiz-btn-ghost kiz-btn-sm">&times;</button>
           </div>
@@ -507,7 +507,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
 
         {successBanner && (
           <div className="kiz-alert kiz-alert-success" role="alert" style={{ margin: '0.75rem 1.5rem 0' }}>
-            <span>✓</span>
+            <span style={{ fontWeight: 700 }}>Éxito:</span>
             <div style={{ flex: 1 }}>{successBanner}</div>
             <button onClick={clearBanners} className="kiz-btn kiz-btn-ghost kiz-btn-sm">&times;</button>
           </div>
@@ -519,7 +519,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
               <div>
                 <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--kiz-accent)', fontWeight: 800 }}>
-                  ⚡ PRÓXIMA ACCIÓN OPERACIONAL REQUERIDA
+                  PRÓXIMA ACCIÓN OPERACIONAL REQUERIDA
                 </div>
                 <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--kiz-text)', marginTop: '0.15rem' }}>
                   {nextAction.actionTitle}
@@ -705,7 +705,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                     fontSize: '0.78rem',
                     fontWeight: 700
                   }}>
-                    <span>✓ Cero Inversión Auditada ($0 Capex)</span>
+                    <span>Cero Inversión Auditada ($0 Capex)</span>
                   </div>
                   <div style={{ fontSize: '0.72rem', color: 'var(--kiz-text-subtle)', marginTop: '0.25rem' }}>
                     Retorno de Inversión (ROI): <strong>Infinito (Puro Ingenio)</strong>
@@ -777,7 +777,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                     </div>
 
                     <div style={{ fontSize: '0.75rem', color: task.completed ? '#16a34a' : 'var(--kiz-text-subtle)', fontWeight: 600 }}>
-                      {task.completed ? `✓ Completada (${task.completedAt || 'Hoy'})` : 'Pendiente'}
+                      {task.completed ? `Completada (${task.completedAt || 'Hoy'})` : 'Pendiente'}
                     </div>
                   </div>
                 ))}
@@ -1112,7 +1112,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
             style={{ minHeight: 48, padding: '0 0.85rem' }}
             aria-label="Cerrar modal"
           >
-            ✕
+            &times;
           </button>
         </div>
       </div>

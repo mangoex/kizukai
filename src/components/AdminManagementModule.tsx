@@ -9,7 +9,7 @@ interface AdminManagementModuleProps {
 }
 
 export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ currentUser, onOpenProfileModal }) => {
-  const [activeTab, setActiveTab] = useState<'users' | 'organizations' | 'catalogs' | 'guidelines'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'organizations' | 'catalogs' | 'guidelines' | 'roles'>('users');
 
   // Estados de datos
   const [usersList, setUsersList] = useState<User[]>([]);
@@ -96,10 +96,29 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
   };
 
   // Roles permitidos para dar de alta según actor
-  const getAllowedTargetRoles = (): UserRole[] => {
-    if (currentUser.role === 'TECH_ADMIN') return ['CONSULTANT'];
-    if (currentUser.role === 'CONSULTANT') return ['COORDINATOR'];
-    if (currentUser.role === 'COORDINATOR') return ['PARTICIPANT', 'MENTOR'];
+  const getAllowedTargetRoles = (): { code: UserRole; label: string }[] => {
+    if (currentUser.role === 'TECH_ADMIN') {
+      return [
+        { code: 'CONSULTANT', label: 'Consultor (CONSULTANT)' },
+        { code: 'MENTOR', label: 'Mentor (MENTOR)' },
+        { code: 'PARTICIPANT', label: 'Participante (PARTICIPANT)' },
+        { code: 'COORDINATOR', label: 'Coordinador (COORDINATOR)' },
+        { code: 'TECH_ADMIN', label: 'Administrador Técnico (TECH_ADMIN)' }
+      ];
+    }
+    if (currentUser.role === 'CONSULTANT') {
+      return [
+        { code: 'COORDINATOR', label: 'Coordinador (COORDINATOR)' },
+        { code: 'MENTOR', label: 'Mentor (MENTOR)' },
+        { code: 'PARTICIPANT', label: 'Participante (PARTICIPANT)' }
+      ];
+    }
+    if (currentUser.role === 'COORDINATOR') {
+      return [
+        { code: 'PARTICIPANT', label: 'Participante (PARTICIPANT)' },
+        { code: 'MENTOR', label: 'Mentor (MENTOR)' }
+      ];
+    }
     return [];
   };
 
@@ -121,7 +140,7 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
     });
 
     if (res.success && res.user) {
-      setSuccessMsg(`✓ Usuario ${res.user.name} (${res.user.role}) registrado exitosamente.`);
+      setSuccessMsg(`Usuario ${res.user.name} (${res.user.role}) registrado exitosamente.`);
       setNewUserName('');
       setNewUserEmail('');
       loadData();
@@ -168,7 +187,7 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
       });
 
       if (res.success && res.organization) {
-        setSuccessMsg(`✓ Empresa '${res.organization.commercialName}' (${res.organization.id}) actualizada exitosamente.`);
+        setSuccessMsg(`Empresa '${res.organization.commercialName}' (${res.organization.id}) actualizada exitosamente.`);
         handleCancelOrgEdit();
         loadData();
       } else {
@@ -185,7 +204,7 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
       });
 
       if (res.success && res.organization) {
-        setSuccessMsg(`✓ Empresa ${res.organization.commercialName} (${res.organization.id}) creada y asignada a ${selectedConsultant.name} exitosamente.`);
+        setSuccessMsg(`Empresa ${res.organization.commercialName} (${res.organization.id}) creada y asignada a ${selectedConsultant.name} exitosamente.`);
         setNewBusinessName('');
         setNewCommercialName('');
         setNewTaxId('');
@@ -207,7 +226,7 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
     });
 
     if (res.success && res.department) {
-      setSuccessMsg(`✓ Departamento '${res.department.name}' agregado al catálogo de ${res.department.organizationId}.`);
+      setSuccessMsg(`Departamento '${res.department.name}' agregado al catálogo de ${res.department.organizationId}.`);
       setNewDeptName('');
       loadData();
     } else {
@@ -249,7 +268,7 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
       });
 
       if (res.success && res.guideline) {
-        setSuccessMsg(`✓ Directriz '${res.guideline.name}' (${res.guideline.code}) actualizada exitosamente.`);
+        setSuccessMsg(`Directriz '${res.guideline.name}' (${res.guideline.code}) actualizada exitosamente.`);
         handleCancelGuidelineEdit();
         loadData();
       } else {
@@ -265,7 +284,7 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
       });
 
       if (res.success && res.guideline) {
-        setSuccessMsg(`✓ Directriz '${res.guideline.name}' (${res.guideline.code}) registrada para ${getOrgCommercialName(res.guideline.tenantId)} exitosamente.`);
+        setSuccessMsg(`Directriz '${res.guideline.name}' (${res.guideline.code}) registrada para ${getOrgCommercialName(res.guideline.tenantId)} exitosamente.`);
         setNewGuidelineCode('');
         setNewGuidelineLetter('');
         setNewGuidelineName('');
@@ -299,7 +318,14 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '0.75rem' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-              <span style={{ fontSize: '1.35rem' }}>👥</span>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--kiz-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+              </div>
               <h1 id="admin-module-title" style={{ fontSize: '1.35rem', color: 'var(--kiz-text)', margin: 0 }}>
                 Aprovisionamiento y Catálogos Corporativos
               </h1>
@@ -325,7 +351,7 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
               border: '1px solid var(--kiz-border)'
             }}
           >
-            👤 Directorio de Usuarios ({visibleUsers.length})
+            Directorio de Usuarios ({visibleUsers.length})
           </button>
 
           {canCreateOrgs && (
@@ -338,7 +364,7 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
                 border: '1px solid var(--kiz-border)'
               }}
             >
-              🏢 Empresas Clientes ({orgsList.length})
+              Empresas Clientes ({orgsList.length})
             </button>
           )}
 
@@ -351,7 +377,7 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
               border: '1px solid var(--kiz-border)'
             }}
           >
-            🗂️ Departamentos ({deptsList.length})
+            Departamentos ({deptsList.length})
           </button>
 
           <button
@@ -363,7 +389,19 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
               border: '1px solid var(--kiz-border)'
             }}
           >
-            🎯 Directrices QCDSM ({guidelinesList.length})
+            Directrices QCDSM ({guidelinesList.length})
+          </button>
+
+          <button
+            onClick={() => { setActiveTab('roles'); clearAlerts(); }}
+            className="kiz-btn kiz-btn-sm"
+            style={{
+              backgroundColor: activeTab === 'roles' ? 'var(--kiz-primary)' : 'var(--kiz-surface-subtle)',
+              color: activeTab === 'roles' ? '#ffffff' : 'var(--kiz-text)',
+              border: '1px solid var(--kiz-border)'
+            }}
+          >
+            Roles y Permisos ({AdminEngine.ROLES_CATALOG.length})
           </button>
         </div>
       </div>
@@ -371,13 +409,13 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
       {/* Alertas */}
       {successMsg && (
         <div className="kiz-alert kiz-alert-success" role="alert">
-          <span>✓</span>
+          <span style={{ fontWeight: 700 }}>Éxito:</span>
           <div>{successMsg}</div>
         </div>
       )}
       {errorMsg && (
         <div className="kiz-alert kiz-alert-danger" role="alert">
-          <span>⚠️</span>
+          <span style={{ fontWeight: 700 }}>Alerta:</span>
           <div>{errorMsg}</div>
         </div>
       )}
@@ -392,7 +430,7 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
                 + Registrar Nuevo Usuario
               </h2>
               <p style={{ fontSize: '0.75rem', color: 'var(--kiz-text-muted)', marginBottom: '1rem' }}>
-                {currentUser.role === 'TECH_ADMIN' && 'Como Administrador Técnico, das de alta a Consultores Globales.'}
+                {currentUser.role === 'TECH_ADMIN' && 'Como Administrador Técnico, aprovisionas usuarios corporativos asignando su rol y empresa.'}
                 {currentUser.role === 'CONSULTANT' && 'Como Consultor Global, das de alta a Coordinadores de Empresa.'}
                 {currentUser.role === 'COORDINATOR' && 'Como Coordinador, das de alta a Participantes y Mentores para tu empresa.'}
               </p>
@@ -427,11 +465,19 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
                     <label className="kiz-label">Rol Asignado *</label>
                     <select
                       value={newUserRole}
-                      onChange={(e) => setNewUserRole(e.target.value as UserRole)}
+                      onChange={(e) => {
+                        const nextRole = e.target.value as UserRole;
+                        setNewUserRole(nextRole);
+                        if ((nextRole === 'PARTICIPANT' || nextRole === 'MENTOR' || nextRole === 'COORDINATOR') && newUserOrg === 'ORG-GLOBAL') {
+                          setNewUserOrg(orgsList[0]?.id || 'ORG-A');
+                        } else if (nextRole === 'CONSULTANT' && currentUser.role === 'TECH_ADMIN') {
+                          setNewUserOrg('ORG-GLOBAL');
+                        }
+                      }}
                       className="kiz-select"
                     >
                       {allowedRoles.map((r) => (
-                        <option key={r} value={r}>{r}</option>
+                        <option key={r.code} value={r.code}>{r.label}</option>
                       ))}
                     </select>
                   </div>
@@ -452,7 +498,9 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
                         onChange={(e) => setNewUserOrg(e.target.value)}
                         className="kiz-select"
                       >
-                        {currentUser.role === 'TECH_ADMIN' && <option value="ORG-GLOBAL">Kizukai Global (Consultoría)</option>}
+                        {(newUserRole === 'CONSULTANT' || newUserRole === 'TECH_ADMIN') && (
+                          <option value="ORG-GLOBAL">Kizukai Global (Consultoría)</option>
+                        )}
                         {orgsList.map((o) => (
                           <option key={o.id} value={o.id}>{o.commercialName} ({o.id})</option>
                         ))}
@@ -483,13 +531,18 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
                   className="kiz-btn kiz-btn-accent"
                   style={{ marginTop: '0.5rem', fontWeight: 700 }}
                 >
-                  🚀 Dar de Alta Usuario
+                  Dar de Alta Usuario
                 </button>
               </form>
             </div>
           ) : (
             <div className="kiz-card" style={{ textAlign: 'center', padding: '2rem 1rem' }}>
-              <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔒</div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.5rem' }}>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--kiz-text-subtle)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+              </div>
               <h3 style={{ fontSize: '1rem', color: 'var(--kiz-text-muted)' }}>Sin privilegios de alta</h3>
               <p style={{ fontSize: '0.78rem', color: 'var(--kiz-text-subtle)' }}>
                 Tu rol actual ({currentUser.role}) no tiene autorización para dar de alta nuevos usuarios.
@@ -555,10 +608,10 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
                           </span>
                         </div>
                         <div style={{ fontSize: '0.72rem', color: 'var(--kiz-text-muted)', marginTop: '0.15rem' }}>
-                          📧 {u.email}
+                          {u.email}
                         </div>
                         <div style={{ fontSize: '0.68rem', color: 'var(--kiz-text-subtle)' }}>
-                          🏢 {u.tenantName} &middot; 📍 {u.department || 'General'}
+                          {u.tenantName} &middot; {u.department || 'General'}
                         </div>
                       </div>
                     </div>
@@ -571,7 +624,7 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
                           className="kiz-btn kiz-btn-outline kiz-btn-sm"
                           style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', fontWeight: 700 }}
                         >
-                          ✏️ Editar Mi Foto
+                          Editar Mi Foto
                         </button>
                       )}
                       <span style={{ fontSize: '0.65rem', padding: '0.15rem 0.4rem', borderRadius: 4, backgroundColor: u.requiresMfa ? '#ecfdf5' : '#f1f5f9', color: u.requiresMfa ? '#065f46' : '#64748b', fontWeight: 600 }}>
@@ -592,7 +645,7 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
           <div className="kiz-card" style={{ height: 'fit-content' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem', flexWrap: 'wrap', gap: '0.3rem' }}>
               <h2 style={{ fontSize: '1.05rem', color: editingOrg ? 'var(--kiz-accent)' : 'var(--kiz-primary)', margin: 0 }}>
-                {editingOrg ? `✏️ Editar Empresa: ${editingOrg.commercialName}` : '+ Registrar Nueva Empresa Cliente'}
+                {editingOrg ? `Editar Empresa: ${editingOrg.commercialName}` : '+ Registrar Nueva Empresa Cliente'}
               </h2>
               {editingOrg && (
                 <span style={{ fontSize: '0.68rem', padding: '0.15rem 0.45rem', backgroundColor: 'var(--kiz-accent-light)', color: 'var(--kiz-accent)', borderRadius: 4, fontWeight: 700 }}>
@@ -661,7 +714,7 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
 
               {/* Selector de Consultor Asignado */}
               <div>
-                <label className="kiz-label">👨‍💼 Consultor Kizukai Asignado *</label>
+                <label className="kiz-label">Consultor Kizukai Asignado *</label>
                 <select
                   value={newOrgConsultantId}
                   onChange={(e) => setNewOrgConsultantId(e.target.value)}
@@ -689,7 +742,7 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
                   className={`kiz-btn ${editingOrg ? 'kiz-btn-accent' : 'kiz-btn-primary'}`}
                   style={{ flex: 1, fontWeight: 700 }}
                 >
-                  {editingOrg ? '💾 Guardar Cambios de Empresa' : '🏢 Crear Espacio de Empresa (Tenant)'}
+                  {editingOrg ? 'Guardar Cambios de Empresa' : 'Crear Espacio de Empresa (Tenant)'}
                 </button>
                 {editingOrg && (
                   <button
@@ -698,7 +751,7 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
                     className="kiz-btn kiz-btn-outline"
                     style={{ fontWeight: 600 }}
                   >
-                    ✖️ Cancelar
+                    Cancelar
                   </button>
                 )}
               </div>
@@ -710,7 +763,7 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
               Empresas Activas en Plataforma ({orgsList.length})
             </h2>
             <p style={{ fontSize: '0.74rem', color: 'var(--kiz-text-muted)', marginBottom: '0.75rem' }}>
-              💡 Haz clic en cualquier empresa para cargar sus datos y editarlos en el formulario.
+              Haz clic en cualquier empresa para cargar sus datos y editarlos en el formulario.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
@@ -745,7 +798,7 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
                           color: isEditingThis ? '#ffffff' : 'var(--kiz-text-muted)',
                           fontWeight: 700
                         }}>
-                          {isEditingThis ? '✏️ Editando' : '✏️ Clic para editar'}
+                          {isEditingThis ? 'Editando' : 'Clic para editar'}
                         </span>
                         <span style={{ fontSize: '0.7rem', fontFamily: 'var(--kiz-font-mono)', fontWeight: 700, backgroundColor: 'var(--kiz-primary-light)', color: 'var(--kiz-primary)', padding: '0.1rem 0.4rem', borderRadius: 4 }}>
                           {org.id}
@@ -770,7 +823,7 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
                       fontWeight: 600,
                       flexWrap: 'wrap'
                     }}>
-                      <span>👨‍💼 Consultor Asignado:</span>
+                      <span>Consultor Asignado:</span>
                       <span style={{ backgroundColor: '#ffffff', padding: '0.1rem 0.45rem', borderRadius: 4, border: '1px solid var(--kiz-border-subtle)', color: 'var(--kiz-text)', fontWeight: 700 }}>
                         {getConsultantDisplayName(org)}
                       </span>
@@ -840,7 +893,7 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
                 </div>
 
                 <button type="submit" className="kiz-btn kiz-btn-primary" style={{ marginTop: '0.5rem', fontWeight: 700 }}>
-                  ➕ Guardar en Catálogo
+                  Guardar en Catálogo
                 </button>
               </form>
             </div>
@@ -867,7 +920,7 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
                   <div>
                     <strong style={{ fontSize: '0.85rem' }}>{d.name}</strong>
                     <div style={{ fontSize: '0.7rem', color: 'var(--kiz-text-subtle)' }}>
-                      🏢 {d.organizationId} &middot; 📍 {d.branchOffice || 'Planta Principal'}
+                      {d.organizationId} &middot; {d.branchOffice || 'Planta Principal'}
                     </div>
                   </div>
                   <span style={{ fontSize: '0.65rem', fontFamily: 'var(--kiz-font-mono)', color: 'var(--kiz-text-muted)' }}>
@@ -887,7 +940,7 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
             <div className="kiz-card" style={{ height: 'fit-content' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem', flexWrap: 'wrap', gap: '0.3rem' }}>
                 <h2 style={{ fontSize: '1.05rem', color: editingGuideline ? 'var(--kiz-accent)' : 'var(--kiz-primary)', margin: 0 }}>
-                  {editingGuideline ? `✏️ Editar Directriz: ${editingGuideline.name}` : '+ Agregar Directriz Estratégica'}
+                  {editingGuideline ? `Editar Directriz: ${editingGuideline.name}` : '+ Agregar Directriz Estratégica'}
                 </h2>
                 {editingGuideline && (
                   <span style={{ fontSize: '0.68rem', padding: '0.15rem 0.45rem', backgroundColor: 'var(--kiz-accent-light)', color: 'var(--kiz-accent)', borderRadius: 4, fontWeight: 700 }}>
@@ -904,7 +957,7 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
               <form onSubmit={handleCreateOrUpdateGuideline} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {/* Selector de Empresa para vincular la directriz */}
                 <div>
-                  <label className="kiz-label">🏢 Empresa Cliente Relacionada *</label>
+                  <label className="kiz-label">Empresa Cliente Relacionada *</label>
                   <select
                     value={newGuidelineOrg}
                     onChange={(e) => setNewGuidelineOrg(e.target.value)}
@@ -986,7 +1039,7 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
                     className="kiz-btn kiz-btn-accent"
                     style={{ flex: 1, fontWeight: 700 }}
                   >
-                    {editingGuideline ? '💾 Guardar Cambios en Directriz' : '🎯 Guardar Directriz Estratégica'}
+                    {editingGuideline ? 'Guardar Cambios en Directriz' : 'Guardar Directriz Estratégica'}
                   </button>
                   {editingGuideline && (
                     <button
@@ -995,7 +1048,7 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
                       className="kiz-btn kiz-btn-outline"
                       style={{ fontWeight: 600 }}
                     >
-                      ✖️ Cancelar
+                      Cancelar
                     </button>
                   )}
                 </div>
@@ -1029,7 +1082,7 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
               </div>
             </div>
             <p style={{ fontSize: '0.74rem', color: 'var(--kiz-text-muted)', marginBottom: '0.75rem' }}>
-              💡 Haz clic en cualquier directriz para cargar sus datos y editarlos en el formulario.
+              Haz clic en cualquier directriz para cargar sus datos y editarlos en el formulario.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', maxHeight: '550px', overflowY: 'auto' }}>
@@ -1082,7 +1135,7 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
                             color: 'var(--kiz-primary)',
                             fontWeight: 700
                           }}>
-                            🏢 {getOrgCommercialName(g.tenantId || 'ORG-A')}
+                            {getOrgCommercialName(g.tenantId || 'ORG-A')}
                           </span>
                           <span style={{
                             fontSize: '0.68rem',
@@ -1108,13 +1161,162 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
                           color: isEditingThis ? 'var(--kiz-accent)' : 'var(--kiz-text-subtle)',
                           fontWeight: 700
                         }}>
-                          {isEditingThis ? '✏️ Editando actualmente' : '✏️ Clic para editar'}
+                          {isEditingThis ? 'Editando actualmente' : 'Clic para editar'}
                         </span>
                       </div>
                     </div>
                   );
                 })}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 5: CATÁLOGO DE ROLES DEL SISTEMA Y MATRIZ DE PERMISOS */}
+      {activeTab === 'roles' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {/* Header del Catálogo */}
+          <div className="kiz-card" style={{ padding: '1rem 1.25rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <div>
+                <h2 style={{ fontSize: '1.15rem', color: 'var(--kiz-primary)', margin: 0 }}>
+                  Catálogo Maestro de Roles y Matriz de Permisos RBAC
+                </h2>
+                <p style={{ fontSize: '0.78rem', color: 'var(--kiz-text-muted)', margin: '0.25rem 0 0' }}>
+                  Estructura oficial de perfiles de usuario, niveles de acceso y facultades metodológicas según el marco Kizukai Kaizen.
+                </p>
+              </div>
+              {canCreateUsers && (
+                <button
+                  type="button"
+                  onClick={() => { setActiveTab('users'); clearAlerts(); }}
+                  className="kiz-btn kiz-btn-primary kiz-btn-sm"
+                  style={{ fontSize: '0.78rem', fontWeight: 700 }}
+                >
+                  + Dar de Alta Nuevo Usuario
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Grilla de Roles del Catálogo */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))', gap: '1.25rem' }}>
+            {AdminEngine.ROLES_CATALOG.map((roleEntry) => {
+              const usersWithThisRole = usersList.filter((u) => u.role === roleEntry.code);
+              const isCreatableByActor = allowedRoles.some((ar) => ar.code === roleEntry.code);
+
+              return (
+                <div
+                  key={roleEntry.code}
+                  className="kiz-card"
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    padding: '1.25rem',
+                    borderRadius: 'var(--kiz-radius)',
+                    border: '1px solid var(--kiz-border)',
+                    boxShadow: 'var(--kiz-shadow-xs)'
+                  }}
+                >
+                  <div>
+                    {/* Header de la tarjeta del rol */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.65rem', gap: '0.5rem' }}>
+                      <div>
+                        <span className={`role-badge role-${roleEntry.code}`} style={{ fontSize: '0.68rem', padding: '0.15rem 0.5rem' }}>
+                          {roleEntry.code}
+                        </span>
+                        <h3 style={{ fontSize: '1.05rem', color: 'var(--kiz-text)', marginTop: '0.35rem', marginBottom: '0.15rem' }}>
+                          {roleEntry.name}
+                        </h3>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--kiz-text-subtle)', fontWeight: 600 }}>
+                          Alcance: {roleEntry.scope}
+                        </span>
+                      </div>
+                      <span style={{
+                        fontSize: '0.7rem',
+                        fontFamily: 'var(--kiz-font-mono)',
+                        fontWeight: 700,
+                        backgroundColor: 'var(--kiz-surface-subtle)',
+                        padding: '0.2rem 0.5rem',
+                        borderRadius: 'var(--kiz-radius-full)',
+                        color: 'var(--kiz-primary)',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {usersWithThisRole.length} usuarios
+                      </span>
+                    </div>
+
+                    {/* Descripción */}
+                    <p style={{ fontSize: '0.78rem', color: 'var(--kiz-text-muted)', lineHeight: 1.45, marginBottom: '0.85rem' }}>
+                      {roleEntry.description}
+                    </p>
+
+                    {/* Permisos agrupados */}
+                    <div style={{ marginBottom: '0.85rem' }}>
+                      <div style={{ fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--kiz-primary)', marginBottom: '0.4rem' }}>
+                        Permisos y Capacidades Otorgadas:
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        {roleEntry.permissions.map((permGroup, pIdx) => (
+                          <div
+                            key={pIdx}
+                            style={{
+                              backgroundColor: 'var(--kiz-surface-subtle)',
+                              padding: '0.5rem 0.65rem',
+                              borderRadius: 'var(--kiz-radius-sm)',
+                              border: '1px solid var(--kiz-border-subtle)'
+                            }}
+                          >
+                            <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--kiz-text)', marginBottom: '0.25rem' }}>
+                              {permGroup.category}
+                            </div>
+                            <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.7rem', color: 'var(--kiz-text-muted)', lineHeight: 1.4 }}>
+                              {permGroup.items.map((item, iIdx) => (
+                                <li key={iIdx} style={{ marginBottom: '0.15rem' }}>{item}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Responsabilidades clave */}
+                    <div style={{ marginBottom: '1rem' }}>
+                      <div style={{ fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--kiz-text-subtle)', marginBottom: '0.35rem' }}>
+                        Responsabilidades Metodológicas:
+                      </div>
+                      <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.7rem', color: 'var(--kiz-text-muted)', lineHeight: 1.4 }}>
+                        {roleEntry.keyResponsibilities.map((resp, rIdx) => (
+                          <li key={rIdx} style={{ marginBottom: '0.15rem' }}>{resp}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* Botón de acción rápida: Asignar este rol al registrar usuario */}
+                  {canCreateUsers && isCreatableByActor && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNewUserRole(roleEntry.code);
+                        if ((roleEntry.code === 'PARTICIPANT' || roleEntry.code === 'MENTOR' || roleEntry.code === 'COORDINATOR') && newUserOrg === 'ORG-GLOBAL') {
+                          setNewUserOrg(orgsList[0]?.id || 'ORG-A');
+                        } else if (roleEntry.code === 'CONSULTANT' && currentUser.role === 'TECH_ADMIN') {
+                          setNewUserOrg('ORG-GLOBAL');
+                        }
+                        setActiveTab('users');
+                        clearAlerts();
+                      }}
+                      className="kiz-btn kiz-btn-outline kiz-btn-sm"
+                      style={{ width: '100%', fontSize: '0.75rem', fontWeight: 700 }}
+                    >
+                      Asignar este rol al registrar usuario &rarr;
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

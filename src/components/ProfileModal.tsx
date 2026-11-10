@@ -70,7 +70,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     );
 
     if (res.success && res.user) {
-      setStatusMsg({ type: 'success', text: '✓ Perfil actualizado exitosamente.' });
+      setStatusMsg({ type: 'success', text: 'Perfil actualizado exitosamente.' });
       onUserUpdated(res.user);
       setTimeout(() => {
         onClose();
@@ -85,16 +85,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       <div className="kiz-modal" style={{ maxWidth: 540 }}>
         {/* Cabecera */}
         <div className="kiz-modal-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <span style={{ fontSize: '1.4rem' }}>⚙️</span>
-            <div>
-              <h2 id="profile-modal-title" style={{ fontSize: '1.15rem', color: 'var(--kiz-primary)', margin: 0 }}>
-                Mi Perfil de Usuario
-              </h2>
-              <p style={{ fontSize: '0.75rem', color: 'var(--kiz-text-subtle)', margin: 0 }}>
-                Actualiza tus datos de contacto y fotografía personal
-              </p>
-            </div>
+          <div>
+            <h2 id="profile-modal-title" style={{ fontSize: '1.15rem', color: 'var(--kiz-primary)', margin: 0 }}>
+              Mi Perfil de Usuario
+            </h2>
+            <p style={{ fontSize: '0.75rem', color: 'var(--kiz-text-subtle)', margin: 0 }}>
+              Actualiza tus datos de contacto y fotografía personal
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -111,7 +108,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           <div className="kiz-modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {statusMsg && (
               <div className={`kiz-alert kiz-alert-${statusMsg.type}`} role="alert" style={{ marginBottom: 0 }}>
-                <span>{statusMsg.type === 'success' ? '✓' : '⚠️'}</span>
                 <div>{statusMsg.text}</div>
               </div>
             )}
@@ -160,7 +156,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     className="kiz-btn kiz-btn-secondary kiz-btn-sm"
                     style={{ cursor: 'pointer', fontSize: '0.75rem', padding: '0.35rem 0.75rem' }}
                   >
-                    📷 Subir Foto
+                    Subir Foto
                     <input
                       type="file"
                       accept="image/*"
@@ -256,7 +252,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               fontSize: '0.72rem',
               color: 'var(--kiz-text-muted)'
             }}>
-              <span>🏢 Organización: <strong>{currentUser.tenantName} ({currentUser.tenantId})</strong></span>
+              <span>Organización: <strong>{currentUser.tenantName} ({currentUser.tenantId})</strong></span>
               <span className={`role-badge role-${currentUser.role}`} style={{ fontSize: '0.65rem' }}>
                 {currentUser.role}
               </span>
@@ -277,7 +273,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               className="kiz-btn kiz-btn-primary"
               style={{ fontWeight: 700 }}
             >
-              💾 Guardar Cambios
+              Guardar Cambios
             </button>
           </div>
         </form>

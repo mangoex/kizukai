@@ -39,7 +39,11 @@ export const RoleQueues: React.FC<RoleQueuesProps> = ({
   if (role === 'TECH_ADMIN') {
     return (
       <div className="kiz-card" style={{ textAlign: 'center', padding: '2.5rem 1.25rem', backgroundColor: '#fff7ed', border: '2px dashed #ea580c' }}>
-        <div style={{ fontSize: '2.75rem', marginBottom: '0.75rem' }}>🛡️</div>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.75rem' }}>
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
         <div style={{
           display: 'inline-block',
           backgroundColor: '#ffedd5',
@@ -63,7 +67,7 @@ export const RoleQueues: React.FC<RoleQueuesProps> = ({
           className="kiz-btn kiz-btn-primary"
           style={{ width: '100%', maxWidth: 360, padding: '0.65rem 1rem', fontSize: '0.875rem' }}
         >
-          🛡️ Simulador DB &amp; Prueba 403 &rarr;
+          Simulador DB &amp; Prueba 403 &rarr;
         </button>
       </div>
     );
@@ -88,28 +92,28 @@ export const RoleQueues: React.FC<RoleQueuesProps> = ({
       {
         id: 'returned',
         label: `Observaciones (${returned.length})`,
-        icon: '⚠️',
+        icon: '',
         items: returned,
         description: 'Iniciativas devueltas con observaciones metodológicas para cargar Versión 2.0 de evidencias.',
       },
       {
         id: 'drafts',
         label: `Borradores (${drafts.length})`,
-        icon: '📝',
+        icon: '',
         items: drafts,
         description: 'Iniciativas en etapa inicial pendientes de envío a filtro técnico.',
       },
       {
         id: 'active',
         label: `En Implementación (${active.length})`,
-        icon: '⚙️',
+        icon: '',
         items: active,
         description: 'Iniciativas con plan aprobado ejecutando tareas de campo en el Gemba.',
       },
       {
         id: 'finalized',
         label: `Finalizadas (${finalized.length})`,
-        icon: '🏆',
+        icon: '',
         items: finalized,
         description: 'Iniciativas exitosas con Procedimiento Operativo Estandarizado (POE) catalogado.',
       },
@@ -132,28 +136,28 @@ export const RoleQueues: React.FC<RoleQueuesProps> = ({
       {
         id: 'toReview',
         label: `Entregables (${toReview.length})`,
-        icon: '🔍',
+        icon: '',
         items: toReview,
         description: 'Planes de trabajo, resultados y evidencias pendientes de validación o evaluación.',
       },
       {
         id: 'gemba',
         label: `Auditorías 5S (${gembaScheduled.length})`,
-        icon: '📋',
+        icon: '',
         items: gembaScheduled,
         description: 'Verificaciones presenciales en línea y evaluación con firma digital.',
       },
       {
         id: 'expiring',
         label: `Por Vencer (${expiringSoon.length})`,
-        icon: '⏳',
+        icon: '',
         items: expiringSoon,
         description: 'Iniciativas en semanas 6-8 que requieren aceleración para evitar vencimiento.',
       },
       {
         id: 'stagnant',
         label: `Rezagadas (> 7d) (${stagnant.length})`,
-        icon: '🛑',
+        icon: '',
         items: stagnant,
         description: 'Proyectos que superan el umbral de 7 días sin avances registrados en tareas.',
       },
@@ -178,17 +182,10 @@ export const RoleQueues: React.FC<RoleQueuesProps> = ({
       group2026: cohortGoal,
     };
 
-    const cleanIcons: Record<string, string> = {
-      pendingTechnicalReview: '✓',
-      pendingMentorAssignment: '◎',
-      stagnantOver7Days: '▲',
-      group2026: '◆',
-    };
-
     subgroups = COORDINATOR_QUEUES.map((q) => ({
       id: q.id,
       label: `${q.label} (${counts[q.id] ?? 0})`,
-      icon: cleanIcons[q.id] || '•',
+      icon: '',
       items: itemsMap[q.id] || [],
       description: q.description,
     }));
@@ -201,21 +198,21 @@ export const RoleQueues: React.FC<RoleQueuesProps> = ({
       {
         id: 'consolidated',
         label: `Portafolio (${scopedInitiatives.length})`,
-        icon: '🌐',
+        icon: '',
         items: scopedInitiatives,
         description: `Visión global de portafolio: ${orgA.length} en Manufactura Norte (ORG-A) y ${orgB.length} en Alimentos Bajío (ORG-B).`,
       },
       {
         id: 'semaphore',
         label: `En Proceso (${scopedInitiatives.filter((i) => i.state !== 'FINALIZADA' && i.state !== 'RECHAZADA').length})`,
-        icon: '🚦',
+        icon: '',
         items: scopedInitiatives.filter((i) => i.state !== 'FINALIZADA' && i.state !== 'RECHAZADA'),
         description: 'Monitoreo de cumplimiento del método Kizukai: Pasos 1 a 6 y Cero Inversión de Capital.',
       },
       {
         id: 'bestPractices',
         label: `Mejores Prácticas (${bestPractices.length})`,
-        icon: '⭐',
+        icon: '',
         items: bestPractices,
         description: 'Iniciativas estandarizadas de alto impacto económico listas para replicación horizontal.',
       },
@@ -267,7 +264,7 @@ export const RoleQueues: React.FC<RoleQueuesProps> = ({
               color: 'var(--kiz-primary)',
               marginBottom: '0.35rem',
             }}>
-              <span>⚡</span> {mobileProfile.modeTitle}
+              <span>Perfil</span> {mobileProfile.modeTitle}
             </div>
             <h1 id="role-queues-title" style={{ fontSize: '1.15rem', color: 'var(--kiz-text)', margin: 0 }}>
               {currentUser.name}
@@ -309,7 +306,7 @@ export const RoleQueues: React.FC<RoleQueuesProps> = ({
                 boxShadow: 'var(--kiz-shadow-sm)',
               }}
             >
-              ➕ Capturar Idea / Mejora K2 (3 pasos)
+              + Capturar Idea / Mejora K2 (3 pasos)
             </button>
 
             <div style={{
@@ -323,15 +320,15 @@ export const RoleQueues: React.FC<RoleQueuesProps> = ({
               borderTop: '1px solid var(--kiz-border-subtle)',
             }}>
               <span style={{ color: returnedCount > 0 ? 'var(--kiz-danger)' : 'var(--kiz-text-muted)', fontWeight: 600 }}>
-                ⚠️ {returnedCount} por corregir
+                {returnedCount} por corregir
               </span>
               <span>&middot;</span>
               <span style={{ color: 'var(--kiz-text-muted)' }}>
-                📝 {scopedInitiatives.filter((i) => i.state === 'BORRADOR').length} borradores
+                {scopedInitiatives.filter((i) => i.state === 'BORRADOR').length} borradores
               </span>
               <span>&middot;</span>
               <span style={{ color: 'var(--kiz-success)', fontWeight: 600 }}>
-                ⚙️ {scopedInitiatives.filter((i) => i.state === 'EN_IMPLEMENTACION').length} en campo
+                {scopedInitiatives.filter((i) => i.state === 'EN_IMPLEMENTACION').length} en campo
               </span>
             </div>
           </div>
@@ -348,7 +345,7 @@ export const RoleQueues: React.FC<RoleQueuesProps> = ({
             gap: '0.65rem',
           }}>
             <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#166534' }}>
-              📋 Resumen de Recorrido Gemba &amp; 5S en Piso:
+              Resumen de Recorrido Gemba &amp; 5S en Piso:
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
               <button
@@ -440,7 +437,7 @@ export const RoleQueues: React.FC<RoleQueuesProps> = ({
                 className="kiz-btn kiz-btn-sm"
                 style={{ backgroundColor: '#7e22ce', color: '#ffffff', border: 'none', fontSize: '0.75rem', fontWeight: 600 }}
               >
-                📊 Ver Reportes / Exportar &rarr;
+                Ver Reportes / Exportar &rarr;
               </button>
             </div>
 
@@ -468,7 +465,7 @@ export const RoleQueues: React.FC<RoleQueuesProps> = ({
                   whiteSpace: 'nowrap',
                 }}
               >
-                🌐 Todas
+                Todas
               </button>
               <button
                 onClick={() => setSelectedPlantFilter('ORG-A')}
@@ -482,7 +479,7 @@ export const RoleQueues: React.FC<RoleQueuesProps> = ({
                   whiteSpace: 'nowrap',
                 }}
               >
-                🏭 ORG-A Manufactura Norte
+                ORG-A Manufactura Norte
               </button>
               <button
                 onClick={() => setSelectedPlantFilter('ORG-B')}
@@ -496,7 +493,7 @@ export const RoleQueues: React.FC<RoleQueuesProps> = ({
                   whiteSpace: 'nowrap',
                 }}
               >
-                🏢 ORG-B Alimentos Bajío
+                ORG-B Alimentos Bajío
               </button>
             </div>
           </div>
@@ -524,7 +521,7 @@ export const RoleQueues: React.FC<RoleQueuesProps> = ({
                 }}
                 aria-pressed={isSelected}
               >
-                <span>{group.icon}</span>
+                {group.icon ? <span>{group.icon}</span> : null}
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{group.label}</span>
               </button>
             );
@@ -542,7 +539,7 @@ export const RoleQueues: React.FC<RoleQueuesProps> = ({
         fontSize: '0.78rem',
         color: 'var(--kiz-text-muted)',
       }}>
-        <strong>{activeGroup.icon} {activeGroup.label}:</strong> {activeGroup.description}
+        <strong>{activeGroup.label}:</strong> {activeGroup.description}
       </div>
 
       {/* Grilla de Iniciativas en la Bandeja con 1-Tap Quick Action */}
@@ -560,7 +557,11 @@ export const RoleQueues: React.FC<RoleQueuesProps> = ({
         </div>
       ) : (
         <div className="kiz-card" style={{ textAlign: 'center', padding: '2.5rem 1rem', color: 'var(--kiz-text-subtle)' }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>✨</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.5rem' }}>
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--kiz-text-subtle)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
           <h3 style={{ fontSize: '1.05rem', color: 'var(--kiz-text-muted)', marginBottom: '0.25rem' }}>
             No hay iniciativas en este subgrupo actualmente
           </h3>

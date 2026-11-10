@@ -46,7 +46,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
     switch (code) {
       case 'APROBAR_FILTRO_1TAP':
         return {
-          label: '✓ Aprobar Filtro 1-Tap',
+          label: 'Aprobar Filtro 1-Tap',
           bg: '#16a34a',
           hoverBg: '#15803d',
         };
@@ -58,43 +58,43 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
         };
       case 'VALIDAR_PLAN_RAPIDO':
         return {
-          label: '✓ Validar Plan 8 Sem.',
+          label: 'Validar Plan 8 Sem.',
           bg: '#0891b2',
           hoverBg: '#0e7490',
         };
       case 'FIRMAR_5S_Y_APROBAR_K3':
         return {
-          label: '✍️ Firmar 5S y Aprobar K3',
+          label: 'Firmar 5S y Aprobar K3',
           bg: '#7c3aed',
           hoverBg: '#6d28d9',
         };
       case 'REMITIR_CORRECCION_RAPIDA':
         return {
-          label: '📤 Subir Evidencia v2.0 Rápida',
+          label: 'Subir Evidencia v2.0 Rápida',
           bg: '#ea580c',
           hoverBg: '#c2410c',
         };
       case 'ENVIAR_A_REVISION_RAPIDA':
         return {
-          label: '🚀 Enviar a Revisión',
+          label: 'Enviar a Revisión',
           bg: '#2563eb',
           hoverBg: '#1d4ed8',
         };
       case 'NOTIFICAR_TERMINO_OBRA_RAPIDA':
         return {
-          label: '✓ Notificar Término (100%)',
+          label: 'Notificar Término (100%)',
           bg: '#059669',
           hoverBg: '#047857',
         };
       case 'ENVIAR_EVIDENCIA_K3_RAPIDA':
         return {
-          label: '📋 Enviar a Evaluación K3',
+          label: 'Enviar a Evaluación K3',
           bg: '#4f46e5',
           hoverBg: '#4338ca',
         };
       case 'PUBLICAR_POE_RAPIDO':
         return {
-          label: '📜 Publicar Estándar POE',
+          label: 'Publicar Estándar POE',
           bg: '#0f766e',
           hoverBg: '#115e59',
         };
@@ -177,7 +177,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
     try {
       const res = StorageService.transitionInitiative(initiative.id, transitionAction, payloadData);
       if (res.success && res.initiative) {
-        setActionFeedback('✓ ¡Actualizado con éxito!');
+        setActionFeedback('¡Actualizado con éxito!');
         onQuickActionUpdated?.(res.initiative);
       } else {
         setActionFeedback(res.error || 'Error al procesar acción');
@@ -287,13 +287,13 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
           marginBottom: '0.75rem',
         }}>
           <div>
-            🏢 <strong>{initiative.tenantName}</strong> &middot; {initiative.department}
+            <strong>{initiative.tenantName}</strong> &middot; {initiative.department}
           </div>
           <div>
-            👤 Proponente: <strong>{initiative.proponentName}</strong>
+            Proponente: <strong>{initiative.proponentName}</strong>
           </div>
           <div>
-            🧑‍🏫 Mentor: <strong>{initiative.mentorName || 'Sin asignar'}</strong>
+            Mentor: <strong>{initiative.mentorName || 'Sin asignar'}</strong>
           </div>
         </div>
 
@@ -358,10 +358,10 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
               fontSize: '0.68rem',
               color: 'var(--kiz-text-muted)',
             }}>
-              <span>⚡ Acción Rápida Móvil:</span>
+              <span>Acción Rápida Móvil:</span>
               {actionFeedback && (
                 <span style={{
-                  color: actionFeedback.startsWith('✓') ? 'var(--kiz-success)' : 'var(--kiz-danger)',
+                  color: actionFeedback.includes('éxito') ? 'var(--kiz-success)' : 'var(--kiz-danger)',
                   fontWeight: 700,
                   fontSize: '0.68rem',
                 }}>
@@ -392,7 +392,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
               }}
               aria-label={actionUi.label}
             >
-              {isProcessingAction ? '⏳ Procesando...' : actionUi.label}
+              {isProcessingAction ? 'Procesando...' : actionUi.label}
             </button>
           </div>
         )}
@@ -409,7 +409,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
           gap: '0.5rem',
         }}>
           <span style={{ color: 'var(--kiz-text-subtle)' }}>
-            📅 Límite: <strong>{initiative.deadlineDate}</strong>
+            Límite: <strong>{initiative.deadlineDate}</strong>
           </span>
 
           <button

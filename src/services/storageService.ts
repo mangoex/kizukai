@@ -1185,8 +1185,8 @@ export class StorageService {
       return { success: false, error: '403 Forbidden: No tienes privilegios para dar de alta usuarios.' };
     }
 
-    if (role === 'TECH_ADMIN' && targetRole !== 'CONSULTANT' && targetRole !== 'TECH_ADMIN') {
-      return { success: false, error: '403 Forbidden: El Administrador Técnico solo da de alta Consultores Globales.' };
+    if (role === 'TECH_ADMIN') {
+      // El Administrador Técnico puede dar de alta cualquier rol del catálogo corporativo
     }
 
     if (role === 'CONSULTANT' && targetRole !== 'COORDINATOR') {

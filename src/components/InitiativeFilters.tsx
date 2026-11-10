@@ -83,8 +83,11 @@ export const InitiativeFilters: React.FC<InitiativeFiltersProps> = ({
               className="kiz-input"
               style={{ paddingLeft: '2rem' }}
             />
-            <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--kiz-text-subtle)' }}>
-              🔍
+            <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--kiz-text-subtle)', display: 'flex', alignItems: 'center' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
             </span>
           </div>
         </div>
@@ -105,7 +108,7 @@ export const InitiativeFilters: React.FC<InitiativeFiltersProps> = ({
               cursor: !isConsultant ? 'not-allowed' : 'pointer'
             }}
           >
-            {isConsultant && <option value="ALL">🌐 Todas las Empresas (Consolidado)</option>}
+            {isConsultant && <option value="ALL">Todas las Empresas (Consolidado)</option>}
             <option value="ORG-A">Manufactura Eléctrica del Norte (ORG-A)</option>
             <option value="ORG-B">Alimentos Industriales del Bajío (ORG-B)</option>
           </select>
@@ -120,7 +123,7 @@ export const InitiativeFilters: React.FC<InitiativeFiltersProps> = ({
             title="Mostrar u ocultar filtros secundarios en móvil"
             aria-expanded={showMobileFilters}
           >
-            ⚡ Filtros {activeFiltersCount > 0 ? `(${activeFiltersCount})` : ''} {showMobileFilters ? '▲' : '▼'}
+            Filtros {activeFiltersCount > 0 ? `(${activeFiltersCount})` : ''} {showMobileFilters ? '▲' : '▼'}
           </button>
 
           <button

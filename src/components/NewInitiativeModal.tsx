@@ -185,7 +185,6 @@ export const NewInitiativeModal: React.FC<NewInitiativeModalProps> = ({
         <div className="kiz-modal-body">
           {errorMsg && (
             <div className="kiz-alert kiz-alert-danger" role="alert">
-              <span>⚠️</span>
               <div>{errorMsg}</div>
             </div>
           )}
@@ -260,7 +259,7 @@ export const NewInitiativeModal: React.FC<NewInitiativeModalProps> = ({
                 fontSize: '0.78rem',
                 color: 'var(--kiz-text-muted)'
               }}>
-                🏢 <strong>Organización:</strong> {currentUser.tenantName} ({currentUser.tenantId}) &middot; Proponente: <strong>{currentUser.name}</strong>
+                <strong>Organización:</strong> {currentUser.tenantName} ({currentUser.tenantId}) &middot; Proponente: <strong>{currentUser.name}</strong>
               </div>
             </div>
           )}
@@ -349,7 +348,6 @@ export const NewInitiativeModal: React.FC<NewInitiativeModalProps> = ({
           {step === 3 && (
             <div>
               <div className="kiz-alert kiz-alert-warning" style={{ alignItems: 'center', marginBottom: '1.25rem' }}>
-                <span style={{ fontSize: '1.5rem' }}>🛡️</span>
                 <div>
                   <strong>Mandato Kizukai Kaizen: Cero Inversión de Capital</strong>
                   <p style={{ fontSize: '0.78rem', marginTop: '0.2rem' }}>
@@ -429,7 +427,7 @@ export const NewInitiativeModal: React.FC<NewInitiativeModalProps> = ({
                 className="kiz-btn kiz-btn-secondary"
                 title="Guarda la iniciativa en estado BORRADOR para editarla luego"
               >
-                💾 Guardar Borrador
+                Guardar Borrador
               </button>
 
               <button
@@ -439,7 +437,7 @@ export const NewInitiativeModal: React.FC<NewInitiativeModalProps> = ({
                 className="kiz-btn kiz-btn-accent"
                 title="Envía la iniciativa a POR_APROBAR para filtro técnico de Coordinación"
               >
-                🚀 Enviar a Revisión Técnica (KIZ-2026-XXXX)
+                Enviar a Revisión Técnica (KIZ-2026-XXXX)
               </button>
             </div>
           )}

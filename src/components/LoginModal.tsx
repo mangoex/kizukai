@@ -136,7 +136,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         {/* Header */}
         <div className="kiz-modal-header" style={{ backgroundColor: 'var(--kiz-primary)', color: '#ffffff' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <span style={{ fontSize: '1.4rem' }}>🔐</span>
             <div>
               <h2 id="login-modal-title" style={{ color: '#ffffff', fontSize: '1.15rem' }}>
                 {mfaStep ? 'Desafío de Seguridad MFA (6 Dígitos)' : 'Control de Acceso Multi-Tenant Kizukai'}
@@ -160,7 +159,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         <div className="kiz-modal-body">
           {errorMessage && (
             <div className="kiz-alert kiz-alert-danger" role="alert">
-              <span>⚠️</span>
               <div>{errorMessage}</div>
             </div>
           )}
@@ -216,7 +214,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   marginBottom: '0.75rem'
                 }}>
                   <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--kiz-text-muted)' }}>
-                    🎯 Perfiles Demo Multi-Tenant (Acceso Directo con 1 Clic):
+                    Perfiles Demo Multi-Tenant (Acceso Directo con 1 Clic):
                   </span>
                   <span style={{ fontSize: '0.7rem', color: 'var(--kiz-accent)', fontWeight: 600 }}>
                     7 Roles Preconfigurados
@@ -282,7 +280,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             /* Pantalla del Desafío MFA */
             <form onSubmit={handleVerifyMfa}>
               <div className="kiz-alert kiz-alert-warning" style={{ alignItems: 'center' }}>
-                <span style={{ fontSize: '1.25rem' }}>🛡️</span>
                 <div style={{ fontSize: '0.85rem' }}>
                   <strong>Autenticación de Dos Factores Obligatoria</strong> para roles de Coordinación, Consultoría y Administración Técnica.
                 </div>
@@ -317,7 +314,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   fontWeight: 700,
                   marginBottom: '1rem'
                 }}>
-                  <span>🔑 Código MFA Demo para Evaluación:</span>
+                  <span>Código MFA Demo para Evaluación:</span>
                   <strong style={{ fontFamily: 'var(--kiz-font-mono)', fontSize: '0.95rem', letterSpacing: '0.1em' }}>
                     202600
                   </strong>

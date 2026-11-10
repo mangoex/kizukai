@@ -53,7 +53,6 @@ export const ReportsModule: React.FC<ReportsModuleProps> = ({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-              <span style={{ fontSize: '1.35rem' }}>📊</span>
               <h1 id="reports-title" style={{ fontSize: '1.35rem', color: 'var(--kiz-text)', margin: 0 }}>
                 Reportes Directivos y Gobernanza Kaizen
               </h1>
@@ -69,14 +68,14 @@ export const ReportsModule: React.FC<ReportsModuleProps> = ({
               className="kiz-btn kiz-btn-secondary kiz-btn-sm"
               title="Descargar archivo en formato CSV con metadatos de auditoría"
             >
-              📥 Descargar .CSV (Auditado)
+              Descargar CSV (Auditado)
             </button>
             <button
               onClick={handleDownloadExcel}
               className="kiz-btn kiz-btn-success kiz-btn-sm"
               title="Descargar hoja de cálculo Excel"
             >
-              📊 Descargar .XLSX (Excel)
+              Descargar XLSX (Excel)
             </button>
           </div>
         </div>
@@ -160,7 +159,7 @@ export const ReportsModule: React.FC<ReportsModuleProps> = ({
           }}
           aria-pressed={selectedReport === 'A'}
         >
-          📈 Reporte A: Eficiencia &amp; Conversión
+          Reporte A: Eficiencia &amp; Conversión
         </button>
 
         <button
@@ -176,7 +175,7 @@ export const ReportsModule: React.FC<ReportsModuleProps> = ({
           }}
           aria-pressed={selectedReport === 'B'}
         >
-          ⏱️ Reporte B: Ciclos &amp; Estancamiento
+          Reporte B: Ciclos &amp; Estancamiento
         </button>
 
         <button
@@ -192,7 +191,7 @@ export const ReportsModule: React.FC<ReportsModuleProps> = ({
           }}
           aria-pressed={selectedReport === 'C'}
         >
-          💰 Reporte C: Impacto Económico K3 ($0 Capex)
+          Reporte C: Impacto Económico K3 ($0 Capex)
         </button>
       </div>
 
@@ -275,11 +274,11 @@ export const ReportsModule: React.FC<ReportsModuleProps> = ({
                   <td>
                     {i.isStagnant ? (
                       <span style={{ color: '#b91c1c', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                        ⚠️ ALERTA: &gt;7 días sin avance
+                        ALERTA: &gt;7 días sin avance
                       </span>
                     ) : (
                       <span style={{ color: 'var(--kiz-success)', fontWeight: 600 }}>
-                        ✓ En flujo operativo
+                        En flujo operativo
                       </span>
                     )}
                   </td>
@@ -375,8 +374,8 @@ export const ReportsModule: React.FC<ReportsModuleProps> = ({
                 gap: '0.2rem',
                 marginBottom: '0.5rem'
               }}>
-                <div>🏢 <strong>{i.tenantName}</strong> &middot; {i.department}</div>
-                <div>🎯 Directriz: <strong>{i.guideline}</strong> &middot; Mentor: <strong>{i.mentorName || 'Sin asignar'}</strong></div>
+                <div><strong>{i.tenantName}</strong> &middot; {i.department}</div>
+                <div>Directriz: <strong>{i.guideline}</strong> &middot; Mentor: <strong>{i.mentorName || 'Sin asignar'}</strong></div>
               </div>
 
               {/* Contenido Específico según el Reporte Seleccionado */}
@@ -421,7 +420,7 @@ export const ReportsModule: React.FC<ReportsModuleProps> = ({
                     alignItems: 'center',
                     gap: '0.25rem'
                   }}>
-                    {i.isStagnant ? '⚠️ ALERTA SLA: > 7 días sin avance en tareas' : '✓ En flujo operativo continuo'}
+                    {i.isStagnant ? 'ALERTA SLA: > 7 días sin avance en tareas' : 'En flujo operativo continuo'}
                   </div>
                 </div>
               )}

@@ -310,8 +310,7 @@ export const App: React.FC = () => {
                   </div>
                 ) : (
                   <div className="kiz-card" style={{ textAlign: 'center', padding: '3rem 1rem' }}>
-                    <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🔍</div>
-                    <h3 style={{ fontSize: '1.1rem', color: 'var(--kiz-text-muted)' }}>
+                    <h3 style={{ fontSize: '1.1rem', color: 'var(--kiz-text-muted)', marginBottom: '0.5rem' }}>
                       No se encontraron iniciativas con los filtros seleccionados
                     </h3>
                     <p style={{ fontSize: '0.825rem', color: 'var(--kiz-text-subtle)', marginBottom: '1rem' }}>
@@ -350,7 +349,6 @@ export const App: React.FC = () => {
           </>
         ) : (
           <div className="kiz-card" style={{ textAlign: 'center', padding: '4rem 1.5rem', margin: '2rem auto', maxWidth: 600 }}>
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔒</div>
             <h2 style={{ fontSize: '1.5rem', color: 'var(--kiz-primary)', marginBottom: '0.5rem' }}>
               Sesión No Iniciada
             </h2>

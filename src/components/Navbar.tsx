@@ -111,7 +111,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="kiz-mobile-role-pill"
               aria-label={`Cambiar rol. Rol actual: ${currentUser.role}`}
             >
-              <span>👤</span>
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {currentUser.name.split(' ')[0]} ({currentUser.tenantId})
               </span>
@@ -158,8 +157,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               letterSpacing: '0.04em'
             }}>
               {currentUser.role === 'CONSULTANT'
-                ? '🌐 VISIÓN MULTIEMPRESA (ORG-A + ORG-B)'
-                : `🏢 TENANT: ${currentUser.tenantName} (${currentUser.tenantId})`}
+                ? 'VISIÓN MULTIEMPRESA (ORG-A + ORG-B)'
+                : `TENANT: ${currentUser.tenantName} (${currentUser.tenantId})`}
             </span>
           )}
         </div>
@@ -191,7 +190,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 title="Editar fotografía y datos de mi perfil personal"
                 aria-label="Editar mi perfil personal"
               >
-                <span>⚙️ Mi Perfil:</span>
+                <span>Mi Perfil:</span>
                 <span style={{ textDecoration: 'underline' }}>{currentUser.name}</span>
               </button>
             </>
@@ -255,7 +254,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }}
               aria-current={activeView === 'queues' ? 'page' : undefined}
             >
-              📥 Bandejas por Rol
+              Bandejas por Rol
             </button>
 
             <button
@@ -268,7 +267,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }}
               aria-current={activeView === 'catalog' ? 'page' : undefined}
             >
-              🔍 Catálogo de Iniciativas
+              Catálogo de Iniciativas
             </button>
 
             <button
@@ -281,7 +280,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }}
               aria-current={activeView === 'reports' ? 'page' : undefined}
             >
-              📊 Reportes Directivos (A, B, C)
+              Reportes Directivos (A, B, C)
             </button>
 
             <button
@@ -294,7 +293,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }}
               aria-current={activeView === 'database' ? 'page' : undefined}
             >
-              🛡️ BD (22 Tablas) & Seguridad
+              BD (22 Tablas) & Seguridad
             </button>
 
             {(currentUser.role === 'TECH_ADMIN' || currentUser.role === 'CONSULTANT' || currentUser.role === 'COORDINATOR') && (
@@ -308,7 +307,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }}
                 aria-current={activeView === 'admin' ? 'page' : undefined}
               >
-                👥 Usuarios & Áreas
+                Usuarios & Áreas
               </button>
             )}
 
@@ -328,7 +327,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }}
                 title="Editar mis datos y fotografía de perfil"
               >
-                <span>👤</span> Mi Perfil
+                Mi Perfil
               </button>
             )}
           </nav>
@@ -402,7 +401,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                     )}
                   </div>
                   <span>Mi Perfil & Foto</span>
-                  <span style={{ fontSize: '0.8rem' }}>⚙️</span>
                 </button>
               )}
 
@@ -507,7 +505,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                             {currentUser.name}
                           </div>
                           <div style={{ fontSize: '0.68rem', color: 'var(--kiz-text-subtle)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            🏢 {currentUser.tenantName}
+                            {currentUser.tenantName}
                           </div>
                         </div>
                       </div>
@@ -527,7 +525,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                             whiteSpace: 'nowrap'
                           }}
                         >
-                          ✏️ Editar Perfil
+                          Editar Perfil
                         </button>
                       )}
                     </div>
@@ -626,7 +624,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                           className="kiz-btn kiz-btn-primary kiz-btn-sm"
                           style={{ width: '100%', fontSize: '0.75rem', justifyContent: 'center' }}
                         >
-                          ⚙️ Editar Mi Perfil y Foto
+                          Editar Mi Perfil y Foto
                         </button>
                       )}
 

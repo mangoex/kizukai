@@ -124,7 +124,7 @@ export const MobileRoleSheet: React.FC<MobileRoleSheetProps> = ({
                     {currentUser.name}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--kiz-text-subtle)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    🏢 {currentUser.tenantName} ({currentUser.tenantId}) &middot; {currentUser.department}
+                    {currentUser.tenantName} ({currentUser.tenantId}) &middot; {currentUser.department}
                   </div>
                 </div>
               </div>
@@ -146,7 +146,7 @@ export const MobileRoleSheet: React.FC<MobileRoleSheetProps> = ({
                     minHeight: 36
                   }}
                 >
-                  ⚙️ Editar Mi Perfil y Foto
+                  Editar Mi Perfil y Foto
                 </button>
               )}
               <div style={{
@@ -165,7 +165,7 @@ export const MobileRoleSheet: React.FC<MobileRoleSheetProps> = ({
           {/* Selector de Perfiles a 1 Toque */}
           <div style={{ marginBottom: '1rem' }}>
             <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--kiz-text)', marginBottom: '0.5rem' }}>
-              🎯 Seleccionar Perfil Demo (1 Toque Táctil):
+              Seleccionar Perfil Demo (1 Toque Táctil):
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -234,7 +234,9 @@ export const MobileRoleSheet: React.FC<MobileRoleSheetProps> = ({
                         </span>
                       )}
                       {isSelected ? (
-                        <span style={{ color: 'var(--kiz-accent)', fontWeight: 800, fontSize: '1rem' }}>✓</span>
+                        <span style={{ color: 'var(--kiz-accent)', fontWeight: 700, fontSize: '0.72rem', backgroundColor: 'var(--kiz-accent-light)', padding: '0.1rem 0.4rem', borderRadius: 'var(--kiz-radius-xs)' }}>
+                          Activo
+                        </span>
                       ) : (
                         <span style={{ color: 'var(--kiz-border)', fontSize: '0.9rem' }}>›</span>
                       )}
@@ -262,7 +264,7 @@ export const MobileRoleSheet: React.FC<MobileRoleSheetProps> = ({
               className="kiz-btn kiz-btn-secondary kiz-btn-sm"
               style={{ fontSize: '0.72rem', minHeight: 44, justifyContent: 'center', padding: '0.2rem' }}
             >
-              🛡️ Tablas DB
+              Tablas DB
             </button>
 
             {onNavigateToAdmin && (
@@ -275,7 +277,7 @@ export const MobileRoleSheet: React.FC<MobileRoleSheetProps> = ({
                 className="kiz-btn kiz-btn-secondary kiz-btn-sm"
                 style={{ fontSize: '0.72rem', minHeight: 44, justifyContent: 'center', padding: '0.2rem' }}
               >
-                👥 Usuarios
+                Usuarios
               </button>
             )}
 
@@ -288,7 +290,7 @@ export const MobileRoleSheet: React.FC<MobileRoleSheetProps> = ({
               className="kiz-btn kiz-btn-primary kiz-btn-sm"
               style={{ fontSize: '0.72rem', minHeight: 44, justifyContent: 'center', padding: '0.2rem' }}
             >
-              🔑 Login
+              Login
             </button>
           </div>
         </div>

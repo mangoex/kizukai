@@ -21,10 +21,12 @@ describe('AdminEngine - Reglas de Gobierno y Aprovisionamiento RBAC (HU-1.1 a HU
       expect(decision.allowed).toBe(true);
     });
 
-    it('TC-ADMIN-004: TECH_ADMIN no puede dar de alta directamente PARTICIPANT de negocio', () => {
-      const decision = AdminEngine.canUserCreateUser('TECH_ADMIN', 'PARTICIPANT', 'ORG-GLOBAL', 'ORG-A');
-      expect(decision.allowed).toBe(false);
-      expect(decision.reason).toContain('solo da de alta Consultores');
+    it('TC-ADMIN-004: TECH_ADMIN puede dar de alta usuarios con rol MENTOR y PARTICIPANT según el catálogo de roles', () => {
+      const decisionMentor = AdminEngine.canUserCreateUser('TECH_ADMIN', 'MENTOR', 'ORG-GLOBAL', 'ORG-A');
+      expect(decisionMentor.allowed).toBe(true);
+
+      const decisionPart = AdminEngine.canUserCreateUser('TECH_ADMIN', 'PARTICIPANT', 'ORG-GLOBAL', 'ORG-A');
+      expect(decisionPart.allowed).toBe(true);
     });
   });
 
@@ -153,6 +155,25 @@ describe('AdminEngine - Reglas de Gobierno y Aprovisionamiento RBAC (HU-1.1 a HU
       expect(AdminEngine.canUserEditOrganization('COORDINATOR')).toBe(false);
       expect(AdminEngine.canUserEditOrganization('MENTOR')).toBe(false);
       expect(AdminEngine.canUserEditOrganization('PARTICIPANT')).toBe(false);
+    });
+  });
+
+  describe('HU-7.1: Catálogo de Roles del Sistema con Permisos RBAC', () => {
+    it('TC-ADMIN-015: El catálogo de roles contiene los roles con permisos para Consultor, Mentor y Participante', () => {
+      const roles = AdminEngine.ROLES_CATALOG;
+      expect(roles.length).toBeGreaterThanOrEqual(3);
+      const codes = roles.map((r) => r.code);
+      expect(codes).toContain('CONSULTANT');
+      expect(codes).toContain('MENTOR');
+      expect(codes).toContain('PARTICIPANT');
+      expect(codes).toContain('COORDINATOR');
+      expect(codes).toContain('TECH_ADMIN');
+
+      roles.forEach((r) => {
+        expect(r.permissions.length).toBeGreaterThan(0);
+        expect(r.description).toBeTruthy();
+        expect(r.keyResponsibilities.length).toBeGreaterThan(0);
+      });
     });
   });
 });

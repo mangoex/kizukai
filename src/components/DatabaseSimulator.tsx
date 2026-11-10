@@ -107,7 +107,11 @@ export const DatabaseSimulator: React.FC<DatabaseSimulatorProps> = ({
         boxShadow: 'var(--kiz-shadow-sm)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.35rem' }}>
-          <span style={{ fontSize: '1.5rem' }}>🛡️</span>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--kiz-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
           <div>
             <h1 id="db-sim-title" style={{ fontSize: '1.35rem', color: 'var(--kiz-text)', margin: 0 }}>
               Consola de Base de Datos (22 Entidades) &amp; Gobernanza Multi-Tenant
@@ -127,7 +131,7 @@ export const DatabaseSimulator: React.FC<DatabaseSimulatorProps> = ({
           borderRadius: 'var(--kiz-radius)'
         }}>
           <div style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--kiz-primary)', marginBottom: '0.5rem' }}>
-            🧪 Pruebas de Intrusión y Bloqueo en Vivo (Simulador de Firewalls):
+            Pruebas de Intrusión y Bloqueo en Vivo (Simulador de Firewalls):
           </div>
 
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
@@ -161,7 +165,6 @@ export const DatabaseSimulator: React.FC<DatabaseSimulatorProps> = ({
           {/* Resultado de la Prueba de Seguridad */}
           {securityTestResult.status === 'BLOCKED_403' && (
             <div className="kiz-alert kiz-alert-danger" style={{ marginBottom: 0, marginTop: '0.5rem' }}>
-              <span style={{ fontSize: '1.25rem' }}>⛔</span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <strong style={{ fontSize: '0.85rem' }}>{securityTestResult.message}</strong>
                 <pre style={{
@@ -207,7 +210,7 @@ export const DatabaseSimulator: React.FC<DatabaseSimulatorProps> = ({
               boxShadow: activeMobileView === 'ENTITIES' ? 'var(--kiz-shadow-xs)' : 'none'
             }}
           >
-            🗄️ 22 Entidades SQL
+            22 Entidades SQL
           </button>
           <button
             onClick={() => setActiveMobileView('AUDIT_LOGS')}
@@ -223,7 +226,7 @@ export const DatabaseSimulator: React.FC<DatabaseSimulatorProps> = ({
               boxShadow: activeMobileView === 'AUDIT_LOGS' ? 'var(--kiz-shadow-xs)' : 'none'
             }}
           >
-            📜 Bitácora ({auditLogs.length})
+            Bitácora ({auditLogs.length})
           </button>
         </div>
       </div>
@@ -298,7 +301,7 @@ export const DatabaseSimulator: React.FC<DatabaseSimulatorProps> = ({
                     <span>PK: <code>{ent.primaryKey}</code></span>
                     <span>&middot;</span>
                     <span style={{ color: ent.tenantScoped ? 'var(--kiz-info)' : 'var(--kiz-text-subtle)' }}>
-                      {ent.tenantScoped ? '🔒 Aislado por Tenant' : '🌐 Catálogo Global'}
+                      {ent.tenantScoped ? 'Aislado por Tenant' : 'Catálogo Global'}
                     </span>
                   </div>
                 </button>
