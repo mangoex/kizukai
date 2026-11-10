@@ -179,6 +179,70 @@ describe('TDD Suite: Propuesta de Mejoras MVP Alejandra Monge (Noviembre 2026)',
       expect(updateResult.success).toBe(false);
       expect(updateResult.error).toMatch(/multi-tenant|403|aislamiento|no autorizado/i);
     });
+
+    /**
+     * Criterio Gherkin:
+     *   Dado que un TECH_ADMIN registra una nueva empresa
+     *   Cuando especifica el consultor asignado
+     *   Entonces la empresa se crea con el consultor y puede ser posteriormente editada (updateOrganization)
+     */
+    it('TC-EXP-017: Registro y edición de empresa con consultor asignado', () => {
+      const createRes = StorageService.createOrganization(adminOrgA, {
+        businessName: 'Aeroespacial de Querétaro S.A. de C.V.',
+        commercialName: 'AeroQro',
+        taxId: 'AEQ260101QRO',
+        industrySector: 'Aeroespacial',
+        consultantId: 'usr-004-kasuga',
+        consultantName: 'Carlos Kasuga',
+      });
+
+      expect(createRes.success).toBe(true);
+      expect(createRes.organization).toBeDefined();
+      expect(createRes.organization.consultantId).toBe('usr-004-kasuga');
+      expect(createRes.organization.consultantName).toBe('Carlos Kasuga');
+
+      const orgId = createRes.organization.id;
+
+      // Actualizar empresa asignando nuevo consultor o cambiando sector
+      const updateRes = StorageService.updateOrganization(adminOrgA, orgId, {
+        commercialName: 'AeroQro Advanced Systems',
+        industrySector: 'Aeroespacial y Defensa',
+        consultantName: 'Consultor Especialista Kaizen',
+      });
+
+      expect(updateRes.success).toBe(true);
+      expect(updateRes.organization.commercialName).toBe('AeroQro Advanced Systems');
+      expect(updateRes.organization.industrySector).toBe('Aeroespacial y Defensa');
+      expect(updateRes.organization.consultantName).toBe('Consultor Especialista Kaizen');
+    });
+
+    /**
+     * Criterio Gherkin:
+     *   Dado que se crea una directriz vinculada a una empresa
+     *   Cuando se edita dicha directriz
+     *   Entonces sus valores son actualizados manteniendo la integridad multi-tenant
+     */
+    it('TC-EXP-018: Creación y edición de directriz vinculada a una empresa específica', () => {
+      const createRes = StorageService.createGuideline(adminOrgA, {
+        code: 'ERGONOMIA_A',
+        letter: 'S',
+        name: 'Ergonomía en Puestos de Trabajo',
+        description: 'Reducción de fatiga en líneas de ensamble',
+        tenantId: 'ORG-A',
+      });
+
+      expect(createRes.success).toBe(true);
+      expect(createRes.guideline.tenantId).toBe('ORG-A');
+
+      const updateRes = StorageService.updateGuideline(adminOrgA, 'ERGONOMIA_A', {
+        name: 'Ergonomía y Cero Fatiga Gemba',
+        description: 'Estaciones de trabajo ergonómicas certificadas',
+      });
+
+      expect(updateRes.success).toBe(true);
+      expect(updateRes.guideline.name).toBe('Ergonomía y Cero Fatiga Gemba');
+      expect(updateRes.guideline.description).toBe('Estaciones de trabajo ergonómicas certificadas');
+    });
   });
 
   // ==========================================================================

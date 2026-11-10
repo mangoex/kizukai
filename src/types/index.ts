@@ -124,6 +124,8 @@ export interface OrganizationRecord {
   industrySector: string;
   isActive: boolean;
   createdAt: string;
+  consultantId?: string;
+  consultantName?: string;
 }
 
 export interface DepartmentRecord {

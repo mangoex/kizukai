@@ -34,6 +34,8 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
   const [newCommercialName, setNewCommercialName] = useState('');
   const [newTaxId, setNewTaxId] = useState('');
   const [newIndustry, setNewIndustry] = useState('Industrial y Manufactura');
+  const [newOrgConsultantId, setNewOrgConsultantId] = useState('usr-004-kasuga');
+  const [editingOrg, setEditingOrg] = useState<any | null>(null);
 
   // 3. Departamento (COORDINATOR / CONSULTANT / TECH_ADMIN)
   const [newDeptName, setNewDeptName] = useState('');
@@ -45,6 +47,9 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
   const [newGuidelineLetter, setNewGuidelineLetter] = useState('');
   const [newGuidelineName, setNewGuidelineName] = useState('');
   const [newGuidelineDesc, setNewGuidelineDesc] = useState('');
+  const [newGuidelineOrg, setNewGuidelineOrg] = useState(currentUser.tenantId !== 'ORG-GLOBAL' ? currentUser.tenantId : 'ORG-A');
+  const [editingGuideline, setEditingGuideline] = useState<any | null>(null);
+  const [guidelineFilterOrg, setGuidelineFilterOrg] = useState<string>('ALL');
 
   const loadData = () => {
     setUsersList(StorageService.getUsers());
@@ -71,6 +76,23 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
   const clearAlerts = () => {
     setSuccessMsg(null);
     setErrorMsg(null);
+  };
+
+  // Consultores disponibles para asignación a empresas
+  const consultantsList = usersList.filter((u) => u.role === 'CONSULTANT');
+
+  const getOrgCommercialName = (orgId: string): string => {
+    const org = orgsList.find((o) => o.id === orgId);
+    return org ? org.commercialName : orgId;
+  };
+
+  const getConsultantDisplayName = (org: any): string => {
+    if (org.consultantName) return org.consultantName;
+    if (org.consultantId) {
+      const c = usersList.find((u) => u.id === org.consultantId);
+      if (c) return c.name;
+    }
+    return 'Carlos Kasuga';
   };
 
   // Roles permitidos para dar de alta según actor
@@ -108,25 +130,69 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
     }
   };
 
-  const handleCreateOrganization = (e: React.FormEvent) => {
+  // Manejo de Selección para Editar Empresa
+  const handleSelectOrgForEdit = (org: any) => {
+    clearAlerts();
+    setEditingOrg(org);
+    setNewBusinessName(org.businessName || '');
+    setNewCommercialName(org.commercialName || '');
+    setNewTaxId(org.taxId || '');
+    setNewIndustry(org.industrySector || 'Automotriz');
+    setNewOrgConsultantId(org.consultantId || (consultantsList[0]?.id || 'usr-004-kasuga'));
+  };
+
+  const handleCancelOrgEdit = () => {
+    setEditingOrg(null);
+    setNewBusinessName('');
+    setNewCommercialName('');
+    setNewTaxId('');
+    setNewIndustry('Industrial y Manufactura');
+    setNewOrgConsultantId(consultantsList[0]?.id || 'usr-004-kasuga');
+    clearAlerts();
+  };
+
+  const handleCreateOrUpdateOrganization = (e: React.FormEvent) => {
     e.preventDefault();
     clearAlerts();
 
-    const res = StorageService.createOrganization(currentUser, {
-      businessName: newBusinessName,
-      commercialName: newCommercialName,
-      taxId: newTaxId,
-      industrySector: newIndustry
-    });
+    const selectedConsultant = consultantsList.find((c) => c.id === newOrgConsultantId) || { name: 'Carlos Kasuga' };
 
-    if (res.success && res.organization) {
-      setSuccessMsg(`✓ Empresa ${res.organization.commercialName} (${res.organization.id}) creada exitosamente.`);
-      setNewBusinessName('');
-      setNewCommercialName('');
-      setNewTaxId('');
-      loadData();
+    if (editingOrg) {
+      const res = StorageService.updateOrganization(currentUser, editingOrg.id, {
+        businessName: newBusinessName,
+        commercialName: newCommercialName,
+        taxId: newTaxId,
+        industrySector: newIndustry,
+        consultantId: newOrgConsultantId,
+        consultantName: selectedConsultant.name
+      });
+
+      if (res.success && res.organization) {
+        setSuccessMsg(`✓ Empresa '${res.organization.commercialName}' (${res.organization.id}) actualizada exitosamente.`);
+        handleCancelOrgEdit();
+        loadData();
+      } else {
+        setErrorMsg(res.error || 'Error al actualizar la empresa.');
+      }
     } else {
-      setErrorMsg(res.error || 'Error al crear la organización.');
+      const res = StorageService.createOrganization(currentUser, {
+        businessName: newBusinessName,
+        commercialName: newCommercialName,
+        taxId: newTaxId,
+        industrySector: newIndustry,
+        consultantId: newOrgConsultantId,
+        consultantName: selectedConsultant.name
+      });
+
+      if (res.success && res.organization) {
+        setSuccessMsg(`✓ Empresa ${res.organization.commercialName} (${res.organization.id}) creada y asignada a ${selectedConsultant.name} exitosamente.`);
+        setNewBusinessName('');
+        setNewCommercialName('');
+        setNewTaxId('');
+        loadData();
+      } else {
+        setErrorMsg(res.error || 'Error al crear la organización.');
+      }
     }
   };
 
@@ -149,26 +215,65 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
     }
   };
 
-  const handleCreateGuideline = (e: React.FormEvent) => {
+  // Manejo de Selección para Editar Directriz
+  const handleSelectGuidelineForEdit = (g: any) => {
+    clearAlerts();
+    setEditingGuideline(g);
+    setNewGuidelineCode(g.code);
+    setNewGuidelineLetter(g.letter);
+    setNewGuidelineName(g.name);
+    setNewGuidelineDesc(g.description || '');
+    setNewGuidelineOrg(g.tenantId || 'ORG-A');
+  };
+
+  const handleCancelGuidelineEdit = () => {
+    setEditingGuideline(null);
+    setNewGuidelineCode('');
+    setNewGuidelineLetter('');
+    setNewGuidelineName('');
+    setNewGuidelineDesc('');
+    setNewGuidelineOrg(currentUser.tenantId !== 'ORG-GLOBAL' ? currentUser.tenantId : (orgsList[0]?.id || 'ORG-A'));
+    clearAlerts();
+  };
+
+  const handleCreateOrUpdateGuideline = (e: React.FormEvent) => {
     e.preventDefault();
     clearAlerts();
 
-    const res = StorageService.createGuideline(currentUser, {
-      code: newGuidelineCode,
-      letter: newGuidelineLetter,
-      name: newGuidelineName,
-      description: newGuidelineDesc
-    });
+    if (editingGuideline) {
+      const res = StorageService.updateGuideline(currentUser, editingGuideline.code, {
+        name: newGuidelineName,
+        letter: newGuidelineLetter,
+        description: newGuidelineDesc,
+        tenantId: newGuidelineOrg
+      });
 
-    if (res.success && res.guideline) {
-      setSuccessMsg(`✓ Directriz '${res.guideline.name}' (${res.guideline.code}) registrada exitosamente.`);
-      setNewGuidelineCode('');
-      setNewGuidelineLetter('');
-      setNewGuidelineName('');
-      setNewGuidelineDesc('');
-      loadData();
+      if (res.success && res.guideline) {
+        setSuccessMsg(`✓ Directriz '${res.guideline.name}' (${res.guideline.code}) actualizada exitosamente.`);
+        handleCancelGuidelineEdit();
+        loadData();
+      } else {
+        setErrorMsg(res.error || 'Error al actualizar la directriz.');
+      }
     } else {
-      setErrorMsg(res.error || 'Error al registrar la directriz.');
+      const res = StorageService.createGuideline(currentUser, {
+        code: newGuidelineCode,
+        letter: newGuidelineLetter,
+        name: newGuidelineName,
+        description: newGuidelineDesc,
+        tenantId: newGuidelineOrg
+      });
+
+      if (res.success && res.guideline) {
+        setSuccessMsg(`✓ Directriz '${res.guideline.name}' (${res.guideline.code}) registrada para ${getOrgCommercialName(res.guideline.tenantId)} exitosamente.`);
+        setNewGuidelineCode('');
+        setNewGuidelineLetter('');
+        setNewGuidelineName('');
+        setNewGuidelineDesc('');
+        loadData();
+      } else {
+        setErrorMsg(res.error || 'Error al registrar la directriz.');
+      }
     }
   };
 
@@ -485,10 +590,23 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
       {activeTab === 'organizations' && canCreateOrgs && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '1.25rem' }}>
           <div className="kiz-card" style={{ height: 'fit-content' }}>
-            <h2 style={{ fontSize: '1.05rem', color: 'var(--kiz-primary)', marginBottom: '0.4rem' }}>
-              + Registrar Nueva Empresa Cliente
-            </h2>
-            <form onSubmit={handleCreateOrganization} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem', flexWrap: 'wrap', gap: '0.3rem' }}>
+              <h2 style={{ fontSize: '1.05rem', color: editingOrg ? 'var(--kiz-accent)' : 'var(--kiz-primary)', margin: 0 }}>
+                {editingOrg ? `✏️ Editar Empresa: ${editingOrg.commercialName}` : '+ Registrar Nueva Empresa Cliente'}
+              </h2>
+              {editingOrg && (
+                <span style={{ fontSize: '0.68rem', padding: '0.15rem 0.45rem', backgroundColor: 'var(--kiz-accent-light)', color: 'var(--kiz-accent)', borderRadius: 4, fontWeight: 700 }}>
+                  Modo Edición
+                </span>
+              )}
+            </div>
+            <p style={{ fontSize: '0.75rem', color: 'var(--kiz-text-muted)', marginBottom: '1rem' }}>
+              {editingOrg
+                ? `Actualiza la información comercial o reasigna el consultor líder para ${editingOrg.commercialName}.`
+                : 'Registra un nuevo espacio corporativo multi-tenant (Tenant ID) y asigna a su consultor líder.'}
+            </p>
+
+            <form onSubmit={handleCreateOrUpdateOrganization} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <div>
                 <label className="kiz-label">Razón Social *</label>
                 <input
@@ -536,45 +654,130 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
                     <option value="Aeroespacial">Aeroespacial</option>
                     <option value="Metalmecánica">Metalmecánica</option>
                     <option value="Farmacéutica">Farmacéutica</option>
+                    <option value="Industrial y Manufactura">Industrial y Manufactura</option>
                   </select>
                 </div>
               </div>
 
-              <button type="submit" className="kiz-btn kiz-btn-primary" style={{ marginTop: '0.5rem', fontWeight: 700 }}>
-                🏢 Crear Espacio de Empresa (Tenant)
-              </button>
+              {/* Selector de Consultor Asignado */}
+              <div>
+                <label className="kiz-label">👨‍💼 Consultor Kizukai Asignado *</label>
+                <select
+                  value={newOrgConsultantId}
+                  onChange={(e) => setNewOrgConsultantId(e.target.value)}
+                  className="kiz-select"
+                  required
+                >
+                  {consultantsList.length > 0 ? (
+                    consultantsList.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} ({c.email})
+                      </option>
+                    ))
+                  ) : (
+                    <option value="usr-004-kasuga">Carlos Kasuga (carlos.kasuga@kizukai.com)</option>
+                  )}
+                </select>
+                <span style={{ fontSize: '0.68rem', color: 'var(--kiz-text-subtle)', display: 'block', marginTop: '0.2rem' }}>
+                  El consultor metodológico acompañará los comités Kaizen y la aprobación de coordinadores.
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                <button
+                  type="submit"
+                  className={`kiz-btn ${editingOrg ? 'kiz-btn-accent' : 'kiz-btn-primary'}`}
+                  style={{ flex: 1, fontWeight: 700 }}
+                >
+                  {editingOrg ? '💾 Guardar Cambios de Empresa' : '🏢 Crear Espacio de Empresa (Tenant)'}
+                </button>
+                {editingOrg && (
+                  <button
+                    type="button"
+                    onClick={handleCancelOrgEdit}
+                    className="kiz-btn kiz-btn-outline"
+                    style={{ fontWeight: 600 }}
+                  >
+                    ✖️ Cancelar
+                  </button>
+                )}
+              </div>
             </form>
           </div>
 
           <div className="kiz-card">
-            <h2 style={{ fontSize: '1.05rem', color: 'var(--kiz-primary)', marginBottom: '0.5rem' }}>
+            <h2 style={{ fontSize: '1.05rem', color: 'var(--kiz-primary)', marginBottom: '0.25rem' }}>
               Empresas Activas en Plataforma ({orgsList.length})
             </h2>
+            <p style={{ fontSize: '0.74rem', color: 'var(--kiz-text-muted)', marginBottom: '0.75rem' }}>
+              💡 Haz clic en cualquier empresa para cargar sus datos y editarlos en el formulario.
+            </p>
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-              {orgsList.map((org) => (
-                <div
-                  key={org.id}
-                  style={{
-                    padding: '0.85rem',
-                    borderRadius: 'var(--kiz-radius)',
-                    border: '1px solid var(--kiz-border)',
-                    backgroundColor: 'var(--kiz-surface-subtle)'
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <strong style={{ fontSize: '0.9rem', color: 'var(--kiz-text)' }}>{org.commercialName}</strong>
-                    <span style={{ fontSize: '0.7rem', fontFamily: 'var(--kiz-font-mono)', fontWeight: 700, backgroundColor: 'var(--kiz-primary-light)', color: 'var(--kiz-primary)', padding: '0.1rem 0.4rem', borderRadius: 4 }}>
-                      {org.id}
-                    </span>
+              {orgsList.map((org) => {
+                const isEditingThis = editingOrg?.id === org.id;
+                return (
+                  <div
+                    key={org.id}
+                    onClick={() => handleSelectOrgForEdit(org)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleSelectOrgForEdit(org); }}
+                    style={{
+                      padding: '0.85rem',
+                      borderRadius: 'var(--kiz-radius)',
+                      border: isEditingThis ? '2px solid var(--kiz-accent)' : '1px solid var(--kiz-border)',
+                      backgroundColor: isEditingThis ? '#fef2f2' : 'var(--kiz-surface-subtle)',
+                      cursor: 'pointer',
+                      transition: 'var(--kiz-transition)',
+                      boxShadow: isEditingThis ? 'var(--kiz-shadow-md)' : 'none'
+                    }}
+                    title="Haz clic para editar esta empresa"
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <strong style={{ fontSize: '0.9rem', color: 'var(--kiz-text)' }}>{org.commercialName}</strong>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <span style={{
+                          fontSize: '0.67rem',
+                          padding: '0.15rem 0.45rem',
+                          borderRadius: 4,
+                          backgroundColor: isEditingThis ? 'var(--kiz-accent)' : 'var(--kiz-surface-muted)',
+                          color: isEditingThis ? '#ffffff' : 'var(--kiz-text-muted)',
+                          fontWeight: 700
+                        }}>
+                          {isEditingThis ? '✏️ Editando' : '✏️ Clic para editar'}
+                        </span>
+                        <span style={{ fontSize: '0.7rem', fontFamily: 'var(--kiz-font-mono)', fontWeight: 700, backgroundColor: 'var(--kiz-primary-light)', color: 'var(--kiz-primary)', padding: '0.1rem 0.4rem', borderRadius: 4 }}>
+                          {org.id}
+                        </span>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--kiz-text-muted)', marginTop: '0.2rem' }}>
+                      {org.businessName}
+                    </div>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--kiz-text-subtle)', marginTop: '0.25rem' }}>
+                      Sector: <strong>{org.industrySector}</strong> &middot; RFC: {org.taxId}
+                    </div>
+                    <div style={{
+                      marginTop: '0.5rem',
+                      paddingTop: '0.45rem',
+                      borderTop: '1px dashed var(--kiz-border-subtle)',
+                      fontSize: '0.73rem',
+                      color: 'var(--kiz-primary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      fontWeight: 600,
+                      flexWrap: 'wrap'
+                    }}>
+                      <span>👨‍💼 Consultor Asignado:</span>
+                      <span style={{ backgroundColor: '#ffffff', padding: '0.1rem 0.45rem', borderRadius: 4, border: '1px solid var(--kiz-border-subtle)', color: 'var(--kiz-text)', fontWeight: 700 }}>
+                        {getConsultantDisplayName(org)}
+                      </span>
+                    </div>
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--kiz-text-muted)', marginTop: '0.2rem' }}>
-                    {org.businessName}
-                  </div>
-                  <div style={{ fontSize: '0.68rem', color: 'var(--kiz-text-subtle)', marginTop: '0.25rem' }}>
-                    Sector: <strong>{org.industrySector}</strong> &middot; RFC: {org.taxId}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
@@ -682,13 +885,43 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '1.25rem' }}>
           {canManageGuidelines && (
             <div className="kiz-card" style={{ height: 'fit-content' }}>
-              <h2 style={{ fontSize: '1.05rem', color: 'var(--kiz-primary)', marginBottom: '0.4rem' }}>
-                + Agregar Directriz Estratégica
-              </h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem', flexWrap: 'wrap', gap: '0.3rem' }}>
+                <h2 style={{ fontSize: '1.05rem', color: editingGuideline ? 'var(--kiz-accent)' : 'var(--kiz-primary)', margin: 0 }}>
+                  {editingGuideline ? `✏️ Editar Directriz: ${editingGuideline.name}` : '+ Agregar Directriz Estratégica'}
+                </h2>
+                {editingGuideline && (
+                  <span style={{ fontSize: '0.68rem', padding: '0.15rem 0.45rem', backgroundColor: 'var(--kiz-accent-light)', color: 'var(--kiz-accent)', borderRadius: 4, fontWeight: 700 }}>
+                    Modo Edición
+                  </span>
+                )}
+              </div>
               <p style={{ fontSize: '0.75rem', color: 'var(--kiz-text-muted)', marginBottom: '1rem' }}>
-                Directrices corporativas para clasificar iniciativas Kaizen K0-K3.
+                {editingGuideline
+                  ? `Modifica los parámetros de la directriz o reasocia la empresa a la que pertenece.`
+                  : 'Directrices corporativas para clasificar iniciativas Kaizen K0-K3 asociadas a cada empresa.'}
               </p>
-              <form onSubmit={handleCreateGuideline} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+
+              <form onSubmit={handleCreateOrUpdateGuideline} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {/* Selector de Empresa para vincular la directriz */}
+                <div>
+                  <label className="kiz-label">🏢 Empresa Cliente Relacionada *</label>
+                  <select
+                    value={newGuidelineOrg}
+                    onChange={(e) => setNewGuidelineOrg(e.target.value)}
+                    className="kiz-select"
+                    required
+                  >
+                    {orgsList.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.commercialName} ({o.id})
+                      </option>
+                    ))}
+                  </select>
+                  <span style={{ fontSize: '0.68rem', color: 'var(--kiz-text-subtle)', display: 'block', marginTop: '0.2rem' }}>
+                    Esta directriz estratégica quedará asociada exclusivamente a esta empresa.
+                  </span>
+                </div>
+
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.5rem' }}>
                   <div>
                     <label className="kiz-label">Código *</label>
@@ -699,8 +932,17 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
                       value={newGuidelineCode}
                       onChange={(e) => setNewGuidelineCode(e.target.value)}
                       className="kiz-input"
-                      style={{ textTransform: 'uppercase' }}
+                      style={{
+                        textTransform: 'uppercase',
+                        backgroundColor: editingGuideline ? 'var(--kiz-surface-muted)' : '#ffffff'
+                      }}
+                      disabled={Boolean(editingGuideline)}
                     />
+                    {editingGuideline && (
+                      <span style={{ fontSize: '0.65rem', color: 'var(--kiz-text-subtle)' }}>
+                        Identificador único no modificable
+                      </span>
+                    )}
                   </div>
                   <div>
                     <label className="kiz-label">Letra / Sigla *</label>
@@ -738,57 +980,140 @@ export const AdminManagementModule: React.FC<AdminManagementModuleProps> = ({ cu
                   />
                 </div>
 
-                <button type="submit" className="kiz-btn kiz-btn-accent" style={{ marginTop: '0.5rem', fontWeight: 700 }}>
-                  🎯 Guardar Directriz Estratégica
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                  <button
+                    type="submit"
+                    className="kiz-btn kiz-btn-accent"
+                    style={{ flex: 1, fontWeight: 700 }}
+                  >
+                    {editingGuideline ? '💾 Guardar Cambios en Directriz' : '🎯 Guardar Directriz Estratégica'}
+                  </button>
+                  {editingGuideline && (
+                    <button
+                      type="button"
+                      onClick={handleCancelGuidelineEdit}
+                      className="kiz-btn kiz-btn-outline"
+                      style={{ fontWeight: 600 }}
+                    >
+                      ✖️ Cancelar
+                    </button>
+                  )}
+                </div>
               </form>
             </div>
           )}
 
           <div className="kiz-card">
-            <h2 style={{ fontSize: '1.05rem', color: 'var(--kiz-primary)', marginBottom: '0.5rem' }}>
-              Catálogo de Directrices Estratégicas ({guidelinesList.length})
-            </h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-              {guidelinesList.map((g) => (
-                <div
-                  key={g.code}
-                  style={{
-                    padding: '0.85rem',
-                    borderRadius: 'var(--kiz-radius)',
-                    border: '1px solid var(--kiz-border)',
-                    backgroundColor: 'var(--kiz-surface-subtle)'
-                  }}
+            {/* Cabecera con filtro por empresa */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <h2 style={{ fontSize: '1.05rem', color: 'var(--kiz-primary)', margin: 0 }}>
+                Catálogo de Directrices ({guidelinesList.filter((g) => guidelineFilterOrg === 'ALL' || (g.tenantId || 'ORG-A') === guidelineFilterOrg).length})
+              </h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <label style={{ fontSize: '0.72rem', color: 'var(--kiz-text-muted)', fontWeight: 600 }}>
+                  Empresa:
+                </label>
+                <select
+                  value={guidelineFilterOrg}
+                  onChange={(e) => setGuidelineFilterOrg(e.target.value)}
+                  className="kiz-select"
+                  style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem', width: 'auto' }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                      <span style={{
-                        width: 24,
-                        height: 24,
-                        borderRadius: '50%',
-                        backgroundColor: 'var(--kiz-primary)',
-                        color: '#ffffff',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '0.75rem',
-                        fontWeight: 800
-                      }}>
-                        {g.letter}
-                      </span>
-                      <strong style={{ fontSize: '0.88rem', color: 'var(--kiz-text)' }}>{g.name}</strong>
+                  <option value="ALL">Todas las Empresas ({guidelinesList.length})</option>
+                  {orgsList.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.commercialName} ({guidelinesList.filter((g) => (g.tenantId || 'ORG-A') === o.id).length})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <p style={{ fontSize: '0.74rem', color: 'var(--kiz-text-muted)', marginBottom: '0.75rem' }}>
+              💡 Haz clic en cualquier directriz para cargar sus datos y editarlos en el formulario.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', maxHeight: '550px', overflowY: 'auto' }}>
+              {guidelinesList
+                .filter((g) => guidelineFilterOrg === 'ALL' || (g.tenantId || 'ORG-A') === guidelineFilterOrg)
+                .map((g) => {
+                  const isEditingThis = editingGuideline?.code === g.code && (editingGuideline?.tenantId || 'ORG-A') === (g.tenantId || 'ORG-A');
+                  return (
+                    <div
+                      key={`${g.tenantId || 'ORG-A'}-${g.code}`}
+                      onClick={() => handleSelectGuidelineForEdit(g)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleSelectGuidelineForEdit(g); }}
+                      style={{
+                        padding: '0.85rem',
+                        borderRadius: 'var(--kiz-radius)',
+                        border: isEditingThis ? '2px solid var(--kiz-accent)' : '1px solid var(--kiz-border)',
+                        backgroundColor: isEditingThis ? '#fef2f2' : 'var(--kiz-surface-subtle)',
+                        cursor: 'pointer',
+                        transition: 'var(--kiz-transition)',
+                        boxShadow: isEditingThis ? 'var(--kiz-shadow-md)' : 'none'
+                      }}
+                      title="Haz clic para editar esta directriz"
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                          <span style={{
+                            width: 26,
+                            height: 26,
+                            borderRadius: '50%',
+                            backgroundColor: isEditingThis ? 'var(--kiz-accent)' : 'var(--kiz-primary)',
+                            color: '#ffffff',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.75rem',
+                            fontWeight: 800
+                          }}>
+                            {g.letter}
+                          </span>
+                          <strong style={{ fontSize: '0.88rem', color: 'var(--kiz-text)' }}>{g.name}</strong>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                          <span style={{
+                            fontSize: '0.67rem',
+                            padding: '0.12rem 0.45rem',
+                            borderRadius: 4,
+                            backgroundColor: 'var(--kiz-primary-light)',
+                            color: 'var(--kiz-primary)',
+                            fontWeight: 700
+                          }}>
+                            🏢 {getOrgCommercialName(g.tenantId || 'ORG-A')}
+                          </span>
+                          <span style={{
+                            fontSize: '0.68rem',
+                            fontFamily: 'var(--kiz-font-mono)',
+                            backgroundColor: 'var(--kiz-surface-muted)',
+                            padding: '0.12rem 0.4rem',
+                            borderRadius: 4,
+                            fontWeight: 700,
+                            color: 'var(--kiz-primary)'
+                          }}>
+                            {g.code}
+                          </span>
+                        </div>
+                      </div>
+                      {g.description && (
+                        <p style={{ fontSize: '0.74rem', color: 'var(--kiz-text-muted)', marginTop: '0.35rem', marginBottom: '0.25rem' }}>
+                          {g.description}
+                        </p>
+                      )}
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.3rem' }}>
+                        <span style={{
+                          fontSize: '0.67rem',
+                          color: isEditingThis ? 'var(--kiz-accent)' : 'var(--kiz-text-subtle)',
+                          fontWeight: 700
+                        }}>
+                          {isEditingThis ? '✏️ Editando actualmente' : '✏️ Clic para editar'}
+                        </span>
+                      </div>
                     </div>
-                    <span style={{ fontSize: '0.68rem', fontFamily: 'var(--kiz-font-mono)', backgroundColor: 'var(--kiz-surface-muted)', padding: '0.15rem 0.45rem', borderRadius: 4, fontWeight: 700, color: 'var(--kiz-primary)' }}>
-                      {g.code}
-                    </span>
-                  </div>
-                  {g.description && (
-                    <p style={{ fontSize: '0.74rem', color: 'var(--kiz-text-muted)', marginTop: '0.35rem' }}>
-                      {g.description}
-                    </p>
-                  )}
-                </div>
-              ))}
+                  );
+                })}
             </div>
           </div>
         </div>

@@ -626,6 +626,8 @@ export class StorageService {
           commercialName: 'Manufactura Norte',
           taxId: 'MEN920315AB1',
           industrySector: 'Automotriz y Eléctrico',
+          consultantId: 'usr-004-kasuga',
+          consultantName: 'Carlos Kasuga',
           isActive: true,
           createdAt: '2026-01-10T08:00:00Z'
         },
@@ -635,6 +637,8 @@ export class StorageService {
           commercialName: 'Alimentos Bajío',
           taxId: 'ABB180422CD3',
           industrySector: 'Alimentos y Bebidas',
+          consultantId: 'usr-004-kasuga',
+          consultantName: 'Carlos Kasuga',
           isActive: true,
           createdAt: '2026-02-01T09:30:00Z'
         }
@@ -643,7 +647,12 @@ export class StorageService {
       return initialOrgs;
     }
     try {
-      return JSON.parse(raw);
+      const parsed: any[] = JSON.parse(raw);
+      return parsed.map((o: any) => ({
+        ...o,
+        consultantId: o.consultantId || 'usr-004-kasuga',
+        consultantName: o.consultantName || 'Carlos Kasuga'
+      }));
     } catch {
       return [];
     }
@@ -651,7 +660,14 @@ export class StorageService {
 
   public static createOrganization(
     actor: User,
-    data: { businessName: string; commercialName: string; taxId?: string; industrySector: string }
+    data: {
+      businessName: string;
+      commercialName: string;
+      taxId?: string;
+      industrySector: string;
+      consultantId?: string;
+      consultantName?: string;
+    }
   ): { success: boolean; organization?: any; error?: string } {
     if (actor.role !== 'TECH_ADMIN') {
       return {
@@ -672,6 +688,8 @@ export class StorageService {
       commercialName: data.commercialName.trim(),
       taxId: data.taxId?.trim() || 'XAXX010101000',
       industrySector: data.industrySector || 'Industrial',
+      consultantId: data.consultantId || '',
+      consultantName: data.consultantName || '',
       isActive: true,
       createdAt: new Date().toISOString()
     };
@@ -689,6 +707,60 @@ export class StorageService {
     });
 
     return { success: true, organization: newOrg };
+  }
+
+  public static updateOrganization(
+    actor: User,
+    id: string,
+    data: {
+      businessName?: string;
+      commercialName?: string;
+      taxId?: string;
+      industrySector?: string;
+      consultantId?: string;
+      consultantName?: string;
+      isActive?: boolean;
+    }
+  ): { success: boolean; organization?: any; error?: string } {
+    if (actor.role !== 'TECH_ADMIN') {
+      return {
+        success: false,
+        error: '403 Forbidden: Solo el Administrador Técnico (TECH_ADMIN) puede editar empresas clientes.'
+      };
+    }
+
+    const orgs = this.getOrganizations();
+    const idx = orgs.findIndex((o: any) => o.id === id);
+    if (idx === -1) {
+      return { success: false, error: `Empresa con ID ${id} no encontrada.` };
+    }
+
+    const existing = orgs[idx];
+    const updated = {
+      ...existing,
+      businessName: data.businessName !== undefined ? data.businessName.trim() : existing.businessName,
+      commercialName: data.commercialName !== undefined ? data.commercialName.trim() : existing.commercialName,
+      taxId: data.taxId !== undefined ? data.taxId.trim() : existing.taxId,
+      industrySector: data.industrySector !== undefined ? data.industrySector : existing.industrySector,
+      consultantId: data.consultantId !== undefined ? data.consultantId : existing.consultantId,
+      consultantName: data.consultantName !== undefined ? data.consultantName : existing.consultantName,
+      isActive: data.isActive !== undefined ? data.isActive : existing.isActive,
+      updatedAt: new Date().toISOString()
+    };
+
+    orgs[idx] = updated;
+    localStorage.setItem(STORAGE_KEYS.ORGANIZATIONS, JSON.stringify(orgs));
+
+    this.logAudit({
+      entity: 'organizations',
+      entityId: id,
+      action: 'ORGANIZATION_UPDATED',
+      performedBy: actor.email,
+      tenantId: id,
+      payloadSnapshot: updated
+    });
+
+    return { success: true, organization: updated };
   }
 
   public static getDepartments(): any[] {
@@ -791,6 +863,18 @@ export class StorageService {
     }
   }
 
+  private static isGlobalTenantOrAdmin(actor: User): boolean {
+    return (
+      actor.email === 'admin.tech@kizukai.com' ||
+      actor.email === 'mangoex@gmail.com' ||
+      actor.tenantId === 'ORG-GLOBAL' ||
+      Boolean(actor.tenantName?.includes('Infrastructure')) ||
+      Boolean(actor.tenantName?.includes('Root')) ||
+      Boolean(actor.tenantName?.includes('Global')) ||
+      actor.role === 'CONSULTANT'
+    );
+  }
+
   public static createGuideline(
     actor: User,
     data: { code: string; letter: string; name: string; description: string; tenantId?: string }
@@ -805,7 +889,13 @@ export class StorageService {
 
     const assignedTenantId = data.tenantId || actor.tenantId || 'ORG-A';
 
-    if (actor.role === 'TECH_ADMIN' && actor.tenantId && data.tenantId && actor.tenantId !== data.tenantId) {
+    if (
+      !this.isGlobalTenantOrAdmin(actor) &&
+      actor.role === 'TECH_ADMIN' &&
+      actor.tenantId &&
+      data.tenantId &&
+      actor.tenantId !== data.tenantId
+    ) {
       return { success: false, error: 'Violación de aislamiento multi-tenant: 403 Forbidden' };
     }
 
@@ -852,7 +942,7 @@ export class StorageService {
   public static updateGuideline(
     actor: User,
     code: string,
-    data: { name?: string; description?: string; letter?: string; [key: string]: any }
+    data: { name?: string; description?: string; letter?: string; tenantId?: string; [key: string]: any }
   ): { success: boolean; guideline?: any; error?: string } {
     if (actor.role !== 'TECH_ADMIN' && actor.role !== 'CONSULTANT') {
       return { success: false, error: '403 Forbidden: No autorizado para modificar directrices.' };
@@ -879,13 +969,19 @@ export class StorageService {
     const existing = list[idx];
     const guidelineTenant = existing.tenantId || 'ORG-A';
 
-    if (actor.role === 'TECH_ADMIN' && actor.tenantId && actor.tenantId !== guidelineTenant) {
+    if (
+      !this.isGlobalTenantOrAdmin(actor) &&
+      actor.role === 'TECH_ADMIN' &&
+      actor.tenantId &&
+      actor.tenantId !== guidelineTenant
+    ) {
       return { success: false, error: 'Violación de aislamiento multi-tenant: 403 Forbidden' };
     }
 
+    const targetTenant = data.tenantId ? data.tenantId : guidelineTenant;
     const updated = {
       ...existing,
-      tenantId: guidelineTenant,
+      tenantId: targetTenant,
       name: data.name !== undefined ? data.name.trim() : existing.name,
       description: data.description !== undefined ? data.description.trim() : existing.description,
       letter: data.letter !== undefined ? data.letter.trim().toUpperCase() : existing.letter
@@ -899,7 +995,7 @@ export class StorageService {
       entityId: upperCode,
       action: 'STRATEGIC_GUIDELINE_UPDATED',
       performedBy: actor.email,
-      tenantId: guidelineTenant,
+      tenantId: targetTenant,
       payloadSnapshot: updated
     });
 
@@ -935,7 +1031,12 @@ export class StorageService {
     const existing = list[idx];
     const guidelineTenant = existing.tenantId || 'ORG-A';
 
-    if (actor.role === 'TECH_ADMIN' && actor.tenantId && actor.tenantId !== guidelineTenant) {
+    if (
+      !this.isGlobalTenantOrAdmin(actor) &&
+      actor.role === 'TECH_ADMIN' &&
+      actor.tenantId &&
+      actor.tenantId !== guidelineTenant
+    ) {
       return { success: false, error: 'Violación de aislamiento multi-tenant: 403 Forbidden' };
     }
 

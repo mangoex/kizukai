@@ -17,6 +17,8 @@ export interface Organization {
   industrySector: string;
   isActive: boolean;
   createdAt: string;
+  consultantId?: string;
+  consultantName?: string;
 }
 
 export interface Department {
@@ -88,6 +90,14 @@ export class AdminEngine {
    * Exclusivo para TECH_ADMIN.
    */
   public static canUserCreateOrganization(actorRole: UserRole): boolean {
+    return actorRole === 'TECH_ADMIN';
+  }
+
+  /**
+   * Determina si un usuario puede editar una organización cliente.
+   * Exclusivo para TECH_ADMIN.
+   */
+  public static canUserEditOrganization(actorRole: UserRole): boolean {
     return actorRole === 'TECH_ADMIN';
   }
 

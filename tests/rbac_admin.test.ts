@@ -145,4 +145,14 @@ describe('AdminEngine - Reglas de Gobierno y Aprovisionamiento RBAC (HU-1.1 a HU
       expect(res.user.phoneNumber).toBe('+526672013019');
     });
   });
+
+  describe('HU-6.1 & HU-6.2: Asignación de Consultor a Empresa y Relación de Directrices por Empresa', () => {
+    it('TC-ADMIN-014: canUserEditOrganization solo autoriza a TECH_ADMIN', () => {
+      expect(AdminEngine.canUserEditOrganization('TECH_ADMIN')).toBe(true);
+      expect(AdminEngine.canUserEditOrganization('CONSULTANT')).toBe(false);
+      expect(AdminEngine.canUserEditOrganization('COORDINATOR')).toBe(false);
+      expect(AdminEngine.canUserEditOrganization('MENTOR')).toBe(false);
+      expect(AdminEngine.canUserEditOrganization('PARTICIPANT')).toBe(false);
+    });
+  });
 });
