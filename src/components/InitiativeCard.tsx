@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Initiative, User } from '../types/index.ts';
-import { getMobileQuickActionForInitiative, MobileQuickActionCode, formatStagnantBadge } from '../domain/mobileUxEngine.ts';
-import { StorageService } from '../services/storageService.ts';
+import { formatStagnantBadge } from '../domain/mobileUxEngine.ts';
 
 interface InitiativeCardProps {
   initiative: Initiative;
@@ -12,13 +11,10 @@ interface InitiativeCardProps {
 
 export const InitiativeCard: React.FC<InitiativeCardProps> = ({
   initiative,
-  currentUser,
+  currentUser: _currentUser,
   onOpenWorkspace,
-  onQuickActionUpdated,
+  onQuickActionUpdated: _onQuickActionUpdated,
 }) => {
-  const [isProcessingAction, setIsProcessingAction] = useState(false);
-  const [actionFeedback, setActionFeedback] = useState<string | null>(null);
-
   const getGuidelineColor = (guideline: string) => {
     switch (guideline) {
       case 'CALIDAD': return { bg: '#eff6ff', text: '#1e40af', border: '#bfdbfe' };
@@ -32,173 +28,16 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
 
   const gStyle = getGuidelineColor(initiative.guideline);
 
-  // Consulta de Acción Rápida Móvil (1-Tap)
-  const quickActionDesc = currentUser && currentUser.role !== 'TECH_ADMIN'
-    ? getMobileQuickActionForInitiative(currentUser.role, initiative.state)
-    : null;
-
-  const hasQuickAction =
-    Boolean(quickActionDesc?.isAvailable) &&
-    quickActionDesc?.actionCode !== 'NINGUNA_ACCION_OPERATIVA' &&
-    quickActionDesc?.actionCode !== 'CONSULTAR_DETALLE_EJECUTIVO';
-
-  const getQuickActionUi = (code: MobileQuickActionCode) => {
-    switch (code) {
-      case 'APROBAR_FILTRO_1TAP':
-        return {
-          label: 'Aprobar Filtro 1-Tap',
-          bg: '#16a34a',
-          hoverBg: '#15803d',
-        };
-      case 'ASIGNAR_MENTOR_RAPIDO':
-        return {
-          label: 'Asignar mentor',
-          bg: '#2563eb',
-          hoverBg: '#1d4ed8',
-        };
-      case 'VALIDAR_PLAN_RAPIDO':
-        return {
-          label: 'Validar Plan 8 Sem.',
-          bg: '#0891b2',
-          hoverBg: '#0e7490',
-        };
-      case 'FIRMAR_5S_Y_APROBAR_K3':
-        return {
-          label: 'Firmar 5S y Aprobar K3',
-          bg: '#7c3aed',
-          hoverBg: '#6d28d9',
-        };
-      case 'REMITIR_CORRECCION_RAPIDA':
-        return {
-          label: 'Subir Evidencia v2.0 Rápida',
-          bg: '#ea580c',
-          hoverBg: '#c2410c',
-        };
-      case 'ENVIAR_A_REVISION_RAPIDA':
-        return {
-          label: 'Enviar a Revisión',
-          bg: '#2563eb',
-          hoverBg: '#1d4ed8',
-        };
-      case 'NOTIFICAR_TERMINO_OBRA_RAPIDA':
-        return {
-          label: 'Notificar Término (100%)',
-          bg: '#059669',
-          hoverBg: '#047857',
-        };
-      case 'ENVIAR_EVIDENCIA_K3_RAPIDA':
-        return {
-          label: 'Enviar a Evaluación K3',
-          bg: '#4f46e5',
-          hoverBg: '#4338ca',
-        };
-      case 'PUBLICAR_POE_RAPIDO':
-        return {
-          label: 'Publicar Estándar POE',
-          bg: '#0f766e',
-          hoverBg: '#115e59',
-        };
-      default:
-        return {
-          label: quickActionDesc?.label || 'Ejecutar Acción',
-          bg: 'var(--kiz-primary)',
-          hoverBg: 'var(--kiz-primary-dark)',
-        };
-    }
-  };
-
-  const handleExecute1TapAction = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!currentUser || !quickActionDesc || isProcessingAction) return;
-
-    setIsProcessingAction(true);
-    setActionFeedback(null);
-
-    let transitionAction = '';
-    let payloadData: any = { user: currentUser };
-
-    switch (quickActionDesc.actionCode) {
-      case 'APROBAR_FILTRO_1TAP':
-        transitionAction = 'APROBAR_FILTRO_TECNICO';
-        break;
-      case 'ASIGNAR_MENTOR_RAPIDO':
-        onOpenWorkspace(initiative);
-        setIsProcessingAction(false);
-        return;
-      case 'VALIDAR_PLAN_RAPIDO':
-        transitionAction = 'VALIDAR_PLAN';
-        payloadData = {
-          user: currentUser,
-          weeksCount: 8,
-          justification: 'Plan validado en 8 semanas (ventana máxima) en 1 toque',
-        };
-        break;
-      case 'FIRMAR_5S_Y_APROBAR_K3':
-        transitionAction = 'APROBAR_EVALUACION_K3';
-        payloadData = {
-          user: currentUser,
-          checklist5s: {
-            seiri: true,
-            seiton: true,
-            seiso: true,
-            seiketsu: true,
-            shitsuke: true,
-            digitalSignature: `Firma-Gemba-${currentUser.name.replace(/\s+/g, '')}`,
-            score: 100,
-          },
-        };
-        break;
-      case 'REMITIR_CORRECCION_RAPIDA':
-        transitionAction = 'REMITIR_CORRECCION';
-        payloadData = {
-          user: currentUser,
-          evidenceTitle: 'Evidencia Corregida v2.0 - Validación Gemba',
-          evidenceType: 'MEDICION_GEMBA',
-          evidenceUrlOrText: 'Nueva corrida estable en Gemba con mediciones corregidas.',
-        };
-        break;
-      case 'ENVIAR_A_REVISION_RAPIDA':
-        transitionAction = 'ENVIAR_A_REVISION';
-        break;
-      case 'NOTIFICAR_TERMINO_OBRA_RAPIDA':
-        transitionAction = 'NOTIFICAR_TERMINO_OBRA';
-        break;
-      case 'ENVIAR_EVIDENCIA_K3_RAPIDA':
-        transitionAction = 'ENVIAR_A_EVALUACION';
-        break;
-      case 'PUBLICAR_POE_RAPIDO':
-        transitionAction = 'PUBLICAR_ESTANDAR_POE';
-        break;
-      default:
-        setIsProcessingAction(false);
-        return;
-    }
-
-    try {
-      const res = StorageService.transitionInitiative(initiative.id, transitionAction, payloadData);
-      if (res.success && res.initiative) {
-        setActionFeedback('¡Actualizado con éxito!');
-        onQuickActionUpdated?.(res.initiative);
-      } else {
-        setActionFeedback(res.error || 'Error al procesar acción');
-      }
-    } catch (err: any) {
-      setActionFeedback(err.message || 'Error de transición');
-    } finally {
-      setIsProcessingAction(false);
-    }
-  };
-
-  const actionUi = quickActionDesc ? getQuickActionUi(quickActionDesc.actionCode) : null;
-
   return (
     <article
       className="kiz-card kiz-card-hover"
+      onClick={() => onOpenWorkspace(initiative)}
       style={{
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
         position: 'relative',
+        cursor: 'pointer',
       }}
     >
       {/* Alerta de Estancamiento (+7 días) */}
@@ -219,7 +58,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
           gap: '0.25rem',
           zIndex: 2,
         }}>
-          <span>⏱</span> {formatStagnantBadge(8)}
+          {formatStagnantBadge(8)}
         </div>
       )}
 
@@ -339,64 +178,6 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
           </div>
         </div>
 
-        {/* Barra de Acción Rápida Móvil (1-Tap) */}
-        {hasQuickAction && actionUi && (
-          <div style={{
-            marginBottom: '0.65rem',
-            padding: '0.5rem 0.6rem',
-            backgroundColor: 'var(--kiz-surface-subtle)',
-            borderRadius: 'var(--kiz-radius)',
-            border: '1px solid var(--kiz-border)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.35rem',
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              fontSize: '0.68rem',
-              color: 'var(--kiz-text-muted)',
-            }}>
-              <span>Acción Rápida Móvil:</span>
-              {actionFeedback && (
-                <span style={{
-                  color: actionFeedback.includes('éxito') ? 'var(--kiz-success)' : 'var(--kiz-danger)',
-                  fontWeight: 700,
-                  fontSize: '0.68rem',
-                }}>
-                  {actionFeedback}
-                </span>
-              )}
-            </div>
-
-            <button
-              onClick={handleExecute1TapAction}
-              disabled={isProcessingAction}
-              className="kiz-btn"
-              style={{
-                width: '100%',
-                backgroundColor: actionUi.bg,
-                color: '#ffffff',
-                border: 'none',
-                fontWeight: 700,
-                fontSize: '0.8rem',
-                padding: '0.45rem 0.75rem',
-                borderRadius: 'var(--kiz-radius)',
-                cursor: isProcessingAction ? 'wait' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.4rem',
-                boxShadow: 'var(--kiz-shadow-xs)',
-              }}
-              aria-label={actionUi.label}
-            >
-              {isProcessingAction ? 'Procesando...' : actionUi.label}
-            </button>
-          </div>
-        )}
-
         {/* Footer de Tarjeta con Límite y Botón de Apertura */}
         <div style={{
           display: 'flex',
@@ -413,7 +194,11 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
           </span>
 
           <button
-            onClick={() => onOpenWorkspace(initiative)}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenWorkspace(initiative);
+            }}
             className="kiz-btn kiz-btn-primary kiz-btn-sm"
             aria-label={`Abrir workspace de iniciativa ${initiative.folio}`}
           >
